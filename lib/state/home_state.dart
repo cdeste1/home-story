@@ -29,6 +29,15 @@ class HomeState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateHome(Home updated) {
+  final index = _homes.indexWhere((h) => h.id == updated.id);
+  if (index == -1) return;
+
+  _homes[index] = updated;
+  _save();
+  notifyListeners();
+}
+
     /// 🔥 RESET (dev / demo only)
 Future<void> clear() async {
     _homes.clear();
@@ -58,4 +67,6 @@ Future<void> clear() async {
     await prefs.setString(_storageKey, jsonString);
   }
 }
+
+
 

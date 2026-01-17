@@ -96,7 +96,7 @@ Future<pw.Document> buildHomeTransferPdf({
 
             // Buyer placeholder
             pw.Text(
-              'Prepared for the next homeowner',
+              'Prepared for the next homeowner by',
               style: pw.TextStyle(
                 fontSize: 12,
                 color: PdfColors.grey700,
@@ -106,14 +106,13 @@ Future<pw.Document> buildHomeTransferPdf({
 
             // Agent Info
             if (agent != null) ...[
-              pw.Text(
-                'Provided by',
-                style: pw.TextStyle(
-                  fontSize: 10,
-                  color: PdfColors.grey600,
-                ),
-              ),
-              pw.SizedBox(height: 4),
+              //Add Realtor Logo
+               pw.Image(
+                pw.MemoryImage(loadImageBytesSync(agent.logoPath!)),
+                fit: pw.BoxFit.scaleDown,
+              ),              
+              pw.SizedBox(height: 6),
+                
               pw.Text(
                 agent.name,
                 style: pw.TextStyle(
@@ -183,6 +182,32 @@ Future<pw.Document> buildHomeTransferPdf({
   }
   if (finishWidgets.isNotEmpty) {
     addSection('Paint & Finishes', 'Room-by-room color and finish details', finishWidgets);
+  }
+
+  /// Section 4 — Documents & Receipts
+  final List<pw.Widget> docWidgets = [];
+  for (var cat in ['Documents', 'Receipt']) {
+    if (groupedAssets[cat] != null) {
+      docWidgets.add(pw.Text(cat, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+      docWidgets.addAll(groupedAssets[cat]!.map(_assetBlock));
+      docWidgets.add(pw.SizedBox(height: 12));
+    }
+  }
+  if (docWidgets.isNotEmpty) {
+    addSection('Documents & Receipts', 'Room-by-room documents and receipts', docWidgets);
+  }
+
+  /// Section 5 — Other
+  final List<pw.Widget> otherWidgets = [];
+  for (var cat in ['Other']) {
+    if (groupedAssets[cat] != null) {
+      otherWidgets.add(pw.Text(cat, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+      otherWidgets.addAll(groupedAssets[cat]!.map(_assetBlock));
+      otherWidgets.add(pw.SizedBox(height: 12));
+    }
+  }
+  if (otherWidgets.isNotEmpty) {
+    addSection('Other', 'Additional information', otherWidgets);
   }
 
   /// Section 6 — Contacts
