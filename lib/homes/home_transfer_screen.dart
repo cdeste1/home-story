@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
-
+import '../services/purchase_manager.dart';
 import '../models/home.dart';
 //import '../models/asset.dart';
 import '../models/agent_profile.dart';
@@ -92,9 +92,9 @@ class HomeTransferScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(
-                exportAccess.isUnlocked
+                exportAccess.isHomeUnlocked(home.id)
                     ? 'Export Home Transfer'
-                    : 'Unlock Home Transfer (\$50)',
+                    : 'Unlock Home Transfer',
               ),
               style: ElevatedButton.styleFrom(
                 elevation: 2,
@@ -104,7 +104,7 @@ class HomeTransferScreen extends StatelessWidget {
                 minimumSize: const Size.fromHeight(52),
               ),
               onPressed: () async {
-                if (!exportAccess.isUnlocked) {
+                if (!exportAccess.isHomeUnlocked(home.id)) {
                   _showUnlockDialog(context);
                   return;
                 }
@@ -161,24 +161,46 @@ class HomeTransferScreen extends StatelessWidget {
   }
 
   void _showUnlockDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Unlock Home Transfer'),
-        content: const Text(
-          'Unlock a permanent digital transfer document for this home.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              context.read<ExportAccessState>().unlock();
-              Navigator.pop(context);
-            },
-            child: const Text('Unlock (\$50)'),
-          ),
-        ],
+  final purchaseManager = PurchaseManager();
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Unlock Home Transfer'),
+      content: const Text(
+        'Choose how you’d like to unlock this home:',
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+
+        // Per Home Option
+        ElevatedButton(
+          onPressed: () async {
+            await purchaseManager.initialize(context);
+            await purchaseManager.buyHomeUnlock(home.id);
+            Navigator.pop(context);
+          },
+          child: const Text('\$59 Unlock this home permanently'),
+        ),
+
+        // Unlimited Option
+        ElevatedButton(
+          onPressed: () async {
+            await purchaseManager.initialize(context);
+            await purchaseManager.buyUnlimitedYearly();
+            Navigator.pop(context);
+          },
+          child: const Text(
+            '\$399/year – Unlimited homes\n'
+            'Best for active agents (8+ homes/year)\n'
+            'Auto-renews annually. Cancel anytime in Settings.'
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

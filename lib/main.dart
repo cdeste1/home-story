@@ -9,7 +9,12 @@ import 'state/export_access_state.dart';
 import 'auth/login_screen.dart';
 import 'homes/home_list_screen.dart';
 
-void main() {
+void main() 
+    async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      final exportAccessState = ExportAccessState();
+      await exportAccessState.init();
   runApp(
     MultiProvider(
       providers: [

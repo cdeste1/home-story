@@ -8,6 +8,7 @@ import 'add_home_screen.dart';
 import 'home_capture_screen.dart';
 import 'home_transfer_screen.dart';
 import '../state/agent_state.dart';
+import '../auth/settings_screen.dart';
 
 class HomeListScreen extends StatelessWidget {
   const HomeListScreen({super.key});
@@ -50,6 +51,20 @@ class HomeListScreen extends StatelessWidget {
               context.read<HomeState>().clear();
               },
               ),
+          // ✅ Settings Button
+            IconButton(
+              icon: const Icon(Icons.settings),
+              color: accent,
+              tooltip: 'Settings',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SettingsScreen(),
+                  ),
+                );
+              },
+            ),
       
           ],
       ),

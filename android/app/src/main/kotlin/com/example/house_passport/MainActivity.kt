@@ -1,4 +1,4 @@
-package com.example.house_passport
+package com.cdprojects.homestory
 
 import io.flutter.embedding.android.FlutterActivity
 
