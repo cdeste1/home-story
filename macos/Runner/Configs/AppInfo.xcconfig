@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = house_passport
+PRODUCT_NAME = home_story
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.housePassport
+PRODUCT_BUNDLE_IDENTIFIER = com.cdprojects.homestory
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.cdprojects. All rights reserved.
