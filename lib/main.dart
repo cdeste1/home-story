@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 //import 'package:home_story/utils/splash_screen.dart';
 import 'package:provider/provider.dart';
-
+import 'services/purchase_manager.dart';
 import 'state/home_state.dart';
 import 'state/asset_state.dart';
 import 'state/agent_state.dart';
@@ -22,6 +22,11 @@ void main()
         ChangeNotifierProvider(create: (_) => AssetState()),
         ChangeNotifierProvider(create: (_) => AgentState()),
         ChangeNotifierProvider(create: (_) => ExportAccessState()),
+
+        Provider(
+          create: (_) => PurchaseManager(),
+          dispose: (_, manager) => manager.dispose(),
+        ),
       ],
       child: const HomeStoryApp(),
     ),
@@ -63,14 +68,16 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
   }
 
   Future<void> _load() async {
-    await context.read<HomeState>().load();
-    await context.read<AssetState>().load();
-    await context.read<AgentState>().load();
+  await context.read<HomeState>().load();
+  await context.read<AssetState>().load();
+  await context.read<AgentState>().load();
 
-    if (mounted) {
-      setState(() => _loading = false);
-    }
+  await context.read<PurchaseManager>().initialize(context);
+
+  if (mounted) {
+    setState(() => _loading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {

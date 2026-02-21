@@ -34,7 +34,7 @@ class PurchaseManager {
     final product =
         _products.firstWhere((p) => p.id == homeUnlockId);
 
-    _iap.buyConsumable(
+    _iap.buyNonConsumable(
       purchaseParam: PurchaseParam(productDetails: product),
     );
   }

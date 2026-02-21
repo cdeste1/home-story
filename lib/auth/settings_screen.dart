@@ -44,6 +44,10 @@ class SettingsScreen extends StatelessWidget {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: (){Navigator.pop(context);},
+              ),
+          IconButton(
           icon: const Icon(Icons.settings),
           onPressed: () {
             Navigator.push(

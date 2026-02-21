@@ -164,43 +164,93 @@ class HomeTransferScreen extends StatelessWidget {
   final purchaseManager = PurchaseManager();
 
   showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
+  context: context,
+  builder: (dialogContext) {
+    final agent = context.read<AgentState>().agent;
+    final accent = agent?.accentColor != null
+        ? Color(agent!.accentColor!)
+        : Theme.of(dialogContext).colorScheme.primary;
+
+    return AlertDialog(
       title: const Text('Unlock Home Transfer'),
-      content: const Text(
-        'Choose how you’d like to unlock this home:',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
 
-        // Per Home Option
-        ElevatedButton(
-          onPressed: () async {
-            await purchaseManager.initialize(context);
-            await purchaseManager.buyHomeUnlock(home.id);
-            Navigator.pop(context);
-          },
-          child: const Text('\$59 Unlock this home permanently'),
-        ),
-
-        // Unlimited Option
-        ElevatedButton(
-          onPressed: () async {
-            await purchaseManager.initialize(context);
-            await purchaseManager.buyUnlimitedYearly();
-            Navigator.pop(context);
-          },
-          child: const Text(
-            '\$399/year – Unlimited homes\n'
-            'Best for active agents (8+ homes/year)\n'
-            'Auto-renews annually. Cancel anytime in Settings.'
+          const Text(
+            'Choose how you’d like to unlock this home:',
           ),
-        ),
-      ],
-    ),
-  );
+
+          const SizedBox(height: 24),
+
+          // $59 Option
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () async {
+              //await purchaseManager.initialize(context);
+              await purchaseManager.buyHomeUnlock(home.id);
+              Navigator.pop(context);
+            },
+            child: const Text(
+              '\$59 – Unlock this home permanently',
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // $399 Option
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () async {
+              //await purchaseManager.initialize(context);
+              await purchaseManager.buyUnlimitedYearly();
+              Navigator.pop(context);
+            },
+            child: const Column(
+              children: [
+                Text(
+                  '\$399/year – Unlimited Homes',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Best for active agents • Cancel anytime',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  },
+);
+
 }
 }

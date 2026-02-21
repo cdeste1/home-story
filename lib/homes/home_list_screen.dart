@@ -41,16 +41,6 @@ class HomeListScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.restart_alt),
-            color: Color(0XFF099999),
-            tooltip: 'Reset Agent (Dev)',
-            onPressed: (){
-              context.read<AgentState>().clear();
-              // ALSO clear homes
-              context.read<HomeState>().clear();
-              },
-              ),
           // ✅ Settings Button
             IconButton(
               icon: const Icon(Icons.settings),
