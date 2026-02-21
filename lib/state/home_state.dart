@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/home.dart';
 
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/home.dart';
+
 class HomeState extends ChangeNotifier {
   static const _storageKey = 'homes';
 
@@ -10,6 +15,10 @@ class HomeState extends ChangeNotifier {
 
   List<Home> get homes => List.unmodifiable(_homes);
 
+  /// Returns all home IDs
+  List<String> allHomeIds() => _homes.map((h) => h.id).toList();
+
+  /// Load homes from SharedPreferences
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_storageKey);
@@ -23,50 +32,35 @@ class HomeState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Add a new home
   void addHome(Home home) {
     _homes.add(home);
     _save();
     notifyListeners();
   }
 
+  /// Update an existing home
   void updateHome(Home updated) {
-  final index = _homes.indexWhere((h) => h.id == updated.id);
-  if (index == -1) return;
+    final index = _homes.indexWhere((h) => h.id == updated.id);
+    if (index == -1) return;
 
-  _homes[index] = updated;
-  _save();
-  notifyListeners();
-}
-
-    /// 🔥 RESET (dev / demo only)
-Future<void> clear() async {
-    _homes.clear();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('homes');
+    _homes[index] = updated;
+    _save();
     notifyListeners();
   }
 
-  /*Future<void> _load() async {
+  /// Reset all homes (dev / demo only)
+  Future<void> clear() async {
+    _homes.clear();
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_storageKey);
-
-    if (jsonString == null) return;
-
-    final List decoded = json.decode(jsonString);
-    _homes
-      ..clear()
-      ..addAll(decoded.map((e) => Home.fromJson(e)));
-
+    await prefs.remove(_storageKey);
     notifyListeners();
-  }*/
+  }
 
+  /// Persist homes to SharedPreferences
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString =
-        json.encode(_homes.map((e) => e.toJson()).toList());
+    final jsonString = json.encode(_homes.map((e) => e.toJson()).toList());
     await prefs.setString(_storageKey, jsonString);
   }
 }
-
-
-

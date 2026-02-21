@@ -7,82 +7,97 @@ import '../state/export_access_state.dart';
 class PurchaseManager {
   final InAppPurchase _iap = InAppPurchase.instance;
 
+  // Product IDs from App Store Connect
   static const homeUnlockId = 'home_unlock_credit';
   static const unlimitedYearlyId = 'unlimited_yearly';
 
   late StreamSubscription<List<PurchaseDetails>> _subscription;
-
   List<ProductDetails> _products = [];
 
-  String? _pendingHomeId;
+  // Track which homes to unlock after purchase
+  List<String> pendingHomeIds = [];
 
+  // Optional callback when unlock completes (e.g., close dialog or navigate)
+  Function(List<String>)? onUnlockListener;
+
+  void setOnUnlockListener(Function(List<String>) listener) {
+    onUnlockListener = listener;
+  }
+
+  /// Initialize once at app startup
   Future<void> initialize(BuildContext context) async {
+    // Query product details
     final response = await _iap.queryProductDetails(
       {homeUnlockId, unlimitedYearlyId},
     );
 
     _products = response.productDetails;
 
+    // Subscribe to purchase updates
     _subscription = _iap.purchaseStream.listen(
       (purchases) => _handlePurchaseUpdates(purchases, context),
     );
   }
 
+  /// Buy a single home unlock
   Future<void> buyHomeUnlock(String homeId) async {
-    _pendingHomeId = homeId;
+    pendingHomeIds = [homeId];
 
-    final product =
-        _products.firstWhere((p) => p.id == homeUnlockId);
+    final product = _products.firstWhere((p) => p.id == homeUnlockId);
 
-    _iap.buyNonConsumable(
+    await _iap.buyNonConsumable(
       purchaseParam: PurchaseParam(productDetails: product),
     );
   }
 
-  Future<void> buyUnlimitedYearly() async {
-    final product =
-        _products.firstWhere((p) => p.id == unlimitedYearlyId);
+  /// Buy annual unlimited homes
+  Future<void> buyUnlimitedYearly(List<String> allHomeIds) async {
+    pendingHomeIds = allHomeIds;
 
-    _iap.buyNonConsumable(
+    final product = _products.firstWhere((p) => p.id == unlimitedYearlyId);
+
+    await _iap.buyNonConsumable(
       purchaseParam: PurchaseParam(productDetails: product),
     );
   }
 
+  /// Internal handler for purchase updates
   void _handlePurchaseUpdates(
       List<PurchaseDetails> purchases,
       BuildContext context) async {
 
     for (final purchase in purchases) {
-
       if (purchase.status == PurchaseStatus.purchased) {
 
-        if (purchase.productID == homeUnlockId &&
-            _pendingHomeId != null) {
+        // Unlock homes if any are pending
+        if (pendingHomeIds.isNotEmpty &&
+            (purchase.productID == homeUnlockId || purchase.productID == unlimitedYearlyId)) {
 
-          await context
-              .read<ExportAccessState>()
-              .unlockHome(_pendingHomeId!);
+          final exportAccess = context.read<ExportAccessState>();
+          for (final id in pendingHomeIds) {
+            await exportAccess.unlockHome(id);
+          }
 
-          _pendingHomeId = null;
+          // Notify listener if set
+          if (onUnlockListener != null) {
+            onUnlockListener!(pendingHomeIds);
+          }
+
+          // Clear pending homes
+          pendingHomeIds.clear();
         }
 
+        // Handle subscription expiry for unlimited yearly
         if (purchase.productID == unlimitedYearlyId) {
-
-          // 1 year from purchase date
-          final purchaseDate =
-              DateTime.fromMillisecondsSinceEpoch(
-                  int.parse(purchase.transactionDate ?? '0'));
-
-          final expiry = purchaseDate.add(
-            const Duration(days: 365),
+          final purchaseDate = DateTime.fromMillisecondsSinceEpoch(
+            int.parse(purchase.transactionDate ?? '0'),
           );
+          final expiry = purchaseDate.add(const Duration(days: 365));
 
-          await context
-              .read<ExportAccessState>()
-              .setSubscriptionExpiry(expiry);
+          await context.read<ExportAccessState>().setSubscriptionExpiry(expiry);
         }
 
-
+        // Complete the purchase
         await _iap.completePurchase(purchase);
       }
     }

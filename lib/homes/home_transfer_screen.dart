@@ -7,6 +7,7 @@ import '../models/home.dart';
 //import '../models/asset.dart';
 import '../models/agent_profile.dart';
 import '../state/asset_state.dart';
+import '../state/home_state.dart';
 import '../state/agent_state.dart';
 import '../state/export_access_state.dart';
 import '../utils/summary_helpers.dart';
@@ -159,98 +160,102 @@ class HomeTransferScreen extends StatelessWidget {
       Navigator.pop(context);
     }
   }
+void _showUnlockDialog(BuildContext context) {
+  final purchaseManager = context.read<PurchaseManager>();
+  final exportAccess = context.read<ExportAccessState>();
+  final homeState = context.read<HomeState>();
+  final agent = context.read<AgentState>().agent;
+  final accent = agent?.accentColor != null
+      ? Color(agent!.accentColor!)
+      : Theme.of(context).colorScheme.primary;
 
-  void _showUnlockDialog(BuildContext context) {
-  final purchaseManager = PurchaseManager();
-
+  // We'll capture the context used for navigation inside the listener
   showDialog(
-  context: context,
-  builder: (dialogContext) {
-    final agent = context.read<AgentState>().agent;
-    final accent = agent?.accentColor != null
-        ? Color(agent!.accentColor!)
-        : Theme.of(dialogContext).colorScheme.primary;
+    context: context,
+    barrierDismissible: true,
+    builder: (dialogContext) {
+      // Set the unlock listener here, where dialogContext exists
+      purchaseManager.setOnUnlockListener((unlockedHomes) {
+        if (dialogContext.mounted) {
+          Navigator.pop(dialogContext); // safely closes the dialog
+        }
+      });
 
-    return AlertDialog(
-      title: const Text('Unlock Home Transfer'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      return AlertDialog(
+        title: const Text('Unlock Home Transfer'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Choose how you’d like to unlock this home:'),
+            const SizedBox(height: 24),
 
-          const Text(
-            'Choose how you’d like to unlock this home:',
-          ),
-
-          const SizedBox(height: 24),
-
-          // $59 Option
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+            // $59 Option
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () async {
+                purchaseManager.pendingHomeIds = [home.id];
+                await purchaseManager.buyHomeUnlock(home.id);
+              },
+              child: const Text(
+                '\$59 – Unlock this home permanently',
+                textAlign: TextAlign.center,
               ),
             ),
-            onPressed: () async {
-              //await purchaseManager.initialize(context);
-              await purchaseManager.buyHomeUnlock(home.id);
-              Navigator.pop(context);
-            },
-            child: const Text(
-              '\$59 – Unlock this home permanently',
-              textAlign: TextAlign.center,
-            ),
-          ),
 
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // $399 Option
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+            // $399 Option
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-            ),
-            onPressed: () async {
-              //await purchaseManager.initialize(context);
-              await purchaseManager.buyUnlimitedYearly();
-              Navigator.pop(context);
-            },
-            child: const Column(
-              children: [
-                Text(
-                  '\$399/year – Unlimited Homes',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+              onPressed: () async {
+                final allHomeIds = homeState.allHomeIds();
+                purchaseManager.pendingHomeIds = allHomeIds;
+                await purchaseManager.buyUnlimitedYearly(allHomeIds);
+              },
+              child: const Column(
+                children: [
+                  Text(
+                    '\$399/year – Unlimited Homes',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Best for active agents • Cancel anytime',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13),
-                ),
-              ],
+                  SizedBox(height: 4),
+                  Text(
+                    'Best for active agents • Cancel anytime',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 18),
+            const SizedBox(height: 18),
 
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  },
-);
-
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
+
 }
