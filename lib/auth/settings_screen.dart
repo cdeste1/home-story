@@ -47,16 +47,7 @@ class SettingsScreen extends StatelessWidget {
             icon: const Icon(Icons.arrow_back),
             onPressed: (){Navigator.pop(context);},
               ),
-          IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            );
-          },
-        ),
-      
+               
           ],
       ),
       body: ListView(
