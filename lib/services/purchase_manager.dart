@@ -63,45 +63,52 @@ class PurchaseManager {
 
   /// Internal handler for purchase updates
   void _handlePurchaseUpdates(
-      List<PurchaseDetails> purchases,
-      BuildContext context) async {
+    List<PurchaseDetails> purchases,
+    BuildContext context) async {
 
-    for (final purchase in purchases) {
-      if (purchase.status == PurchaseStatus.purchased) {
+  for (final purchase in purchases) {
+    if (purchase.status == PurchaseStatus.purchased) {
 
-        // Unlock homes if any are pending
-        if (pendingHomeIds.isNotEmpty &&
-            (purchase.productID == homeUnlockId || purchase.productID == unlimitedYearlyId)) {
+      final exportAccess = context.read<ExportAccessState>();
 
-          final exportAccess = context.read<ExportAccessState>();
-          for (final id in pendingHomeIds) {
-            await exportAccess.unlockHome(id);
-          }
+      // Unlock homes if any are pending
+      if (pendingHomeIds.isNotEmpty &&
+          (purchase.productID == homeUnlockId || purchase.productID == unlimitedYearlyId)) {
 
-          // Notify listener if set
-          if (onUnlockListener != null) {
-            onUnlockListener!(pendingHomeIds);
-          }
-
-          // Clear pending homes
-          pendingHomeIds.clear();
+        for (final id in pendingHomeIds) {
+          await exportAccess.unlockHome(id);
         }
 
-        // Handle subscription expiry for unlimited yearly
-        if (purchase.productID == unlimitedYearlyId) {
-          final purchaseDate = DateTime.fromMillisecondsSinceEpoch(
-            int.parse(purchase.transactionDate ?? '0'),
-          );
-          final expiry = purchaseDate.add(const Duration(days: 365));
-
-          await context.read<ExportAccessState>().setSubscriptionExpiry(expiry);
+        // Notify listener if set
+        if (onUnlockListener != null) {
+          onUnlockListener!(pendingHomeIds);
         }
 
-        // Complete the purchase
-        await _iap.completePurchase(purchase);
+        // Force UI rebuild
+        exportAccess.notifyListeners();
+
+        // Clear pending homes
+        pendingHomeIds.clear();
       }
+
+      // Handle subscription expiry for unlimited yearly
+      if (purchase.productID == unlimitedYearlyId) {
+        final purchaseDate = DateTime.fromMillisecondsSinceEpoch(
+          int.parse(purchase.transactionDate ?? '0'),
+        );
+        final expiry = purchaseDate.add(const Duration(days: 365));
+
+        await exportAccess.setSubscriptionExpiry(expiry);
+
+        // Force UI rebuild so all homes bypass unlock
+        exportAccess.notifyListeners();
+      }
+
+      // Complete the purchase
+      await _iap.completePurchase(purchase);
     }
   }
+}
 
   void dispose() {
     _subscription.cancel();

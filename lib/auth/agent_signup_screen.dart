@@ -143,14 +143,14 @@ class _AgentSignupScreenState extends State<AgentSignupScreen> {
             // Accent color picker (simple MVP version)
             Row(
               children: [
-                const Text('Accent Color'),
+                const Text('Select Personalized Color'),
                 const SizedBox(width: 12),
                 GestureDetector(
                   onTap: () async {
                     final color = await showDialog<Color>(
                       context: context,
                       builder: (_) => AlertDialog(
-                        title: const Text('Select Accent Color'),
+                        title: const Text('Select Color'),
                         content: Wrap(
                           spacing: 8,
                           children: [

@@ -31,6 +31,8 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
     _brokerageController = TextEditingController(text: agent?.brokerage ?? '');
     _emailController = TextEditingController(text: agent?.email ?? '');
     _phoneController = TextEditingController(text: agent?.phone ?? '');
+    _selectedAccentColor = agent?.accentColor;
+    _selectedLogoPath = agent?.logoPath;
   }
 
   @override
@@ -153,7 +155,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                     brokerage: _brokerageController.text.trim(),
                     email: _emailController.text.trim(),
                     phone: _phoneController.text.trim(),
-                    accentColor: agent?.accentColor,
+                    accentColor: _selectedAccentColor ?? agent?.accentColor,
                     logoPath: agent?.logoPath,
                   );
 

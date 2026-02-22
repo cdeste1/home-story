@@ -1,21 +1,18 @@
-//import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:home_story/homes/home_pdf_preview_screen.dart';
 import 'package:provider/provider.dart';
-//import 'package:printing/printing.dart';
 import '../services/purchase_manager.dart';
 import '../models/home.dart';
-//import '../models/asset.dart';
 import '../models/agent_profile.dart';
 import '../state/asset_state.dart';
 import '../state/home_state.dart';
 import '../state/agent_state.dart';
 import '../state/export_access_state.dart';
 import '../utils/summary_helpers.dart';
-//import '../utils/home_transfer_pdf.dart';
+import 'home_pdf_preview_screen.dart';
 
 class HomeTransferScreen extends StatelessWidget {
   final Home home;
+
   const HomeTransferScreen({required this.home, super.key});
 
   @override
@@ -23,24 +20,11 @@ class HomeTransferScreen extends StatelessWidget {
     final assets = context.read<AssetState>().assetsForHome(home.id);
     final summary = countAssetsByCategory(assets);
     final agent = context.read<AgentState>().agent;
-    
     final exportAccess = context.watch<ExportAccessState>();
-    // If agent accent color exists, use it; otherwise fallback to theme
-    final accent = agent?.accentColor != null
-    ? Color(agent!.accentColor!) // convert int to Color
-    : Theme.of(context).colorScheme.primary;
-    
 
-    // Temporary agent info until form is ready
-    /*context.read<AgentState>().save(
-      /*AgentProfile(
-        name: 'Jane Smith',
-        brokerage: 'Smith Realty Group',
-        email: 'jane@smithrealty.com',
-        phone: '(555) 123-4567',
-        accentColor: Color.fromARGB(255, 255, 0, 0).value,
-      ),*/
-    );*/
+    final accent = agent?.accentColor != null
+        ? Color(agent!.accentColor!)
+        : Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,12 +40,17 @@ class HomeTransferScreen extends StatelessWidget {
             // Address Header
             Text(
               home.address,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               "This home's digital twin contains everything the next owner needs.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
 
@@ -76,9 +65,11 @@ class HomeTransferScreen extends StatelessWidget {
                   return Card(
                     elevation: 1,
                     margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: ListTile(
-                      leading: Icon(Icons.check_circle_outline, color: accent),
+                      leading:
+                          Icon(Icons.check_circle_outline, color: accent),
                       title: Text(entry.key.name.toUpperCase()),
                       trailing: Text(
                         entry.value.toString(),
@@ -94,7 +85,8 @@ class HomeTransferScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(
-                exportAccess.isHomeUnlocked(home.id)
+                exportAccess.isHomeUnlocked(home.id) ||
+                        exportAccess.hasUnlimitedAccess()
                     ? 'Export Home Transfer'
                     : 'Unlock Home Transfer',
               ),
@@ -102,12 +94,14 @@ class HomeTransferScreen extends StatelessWidget {
                 elevation: 2,
                 backgroundColor: accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                 minimumSize: const Size.fromHeight(52),
               ),
               onPressed: () async {
-                if (exportAccess.isHomeUnlocked(home.id)) {
-                  // Already unlocked -> directly open PDF
+                if (exportAccess.isHomeUnlocked(home.id) ||
+                    exportAccess.hasUnlimitedAccess()) {
+                  // Already unlocked -> open PDF
                   await _exportPdf(context, home);
                 } else {
                   // Locked -> show unlock dialog
@@ -115,17 +109,18 @@ class HomeTransferScreen extends StatelessWidget {
                 }
               },
             ),
-                ],
-              ),
-            ),
-          );
-        }
+          ],
+        ),
+      ),
+    );
+  }
 
-  Widget _agentBrandingCard(BuildContext context, AgentProfile agent, Color accent) {
+  Widget _agentBrandingCard(
+      BuildContext context, AgentProfile agent, Color accent) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: accent.withValues(alpha: 0.1),
+      color: accent.withOpacity(0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -136,10 +131,13 @@ class HomeTransferScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Closing Gift', style: Theme.of(context).textTheme.labelLarge),
+                  Text('Closing Gift',
+                      style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: 4),
-                  Text(agent.name, style: Theme.of(context).textTheme.titleMedium),
-                  Text(agent.brokerage, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(agent.name,
+                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(agent.brokerage,
+                      style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),
             ),
@@ -149,119 +147,114 @@ class HomeTransferScreen extends StatelessWidget {
     );
   }
 
- Future<void> _exportPdf(BuildContext context, Home home) async {
-  // Simply navigate to the PDF preview screen
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => HomeTransferPdfScreen(home: home),
-    ),
-  );
-}
-      void _showUnlockDialog(BuildContext context, Home home) {
-      final purchaseManager = context.read<PurchaseManager>();
-      //final exportAccess = context.read<ExportAccessState>();
-      final homeState = context.read<HomeState>();
-      final agent = context.read<AgentState>().agent;
-      final accent = agent?.accentColor != null
-          ? Color(agent!.accentColor!)
-          : Theme.of(context).colorScheme.primary;
+  Future<void> _exportPdf(BuildContext context, Home home) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HomeTransferPdfScreen(home: home),
+      ),
+    );
+  }
 
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (dialogContext) {
-          purchaseManager.setOnUnlockListener((unlockedHomes) async {
-            if (dialogContext.mounted) {
-              Navigator.pop(dialogContext); // close the dialog
+  void _showUnlockDialog(BuildContext context, Home home) {
+    final purchaseManager = context.read<PurchaseManager>();
+    final homeState = context.read<HomeState>();
+    final agent = context.read<AgentState>().agent;
+    final accent = agent?.accentColor != null
+        ? Color(agent!.accentColor!)
+        : Theme.of(context).colorScheme.primary;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        // Set listener for purchase completion
+        purchaseManager.setOnUnlockListener((unlockedHomes) async {
+          if (dialogContext.mounted) Navigator.pop(dialogContext);
+
+          if (context.mounted) {
+            for (final id in unlockedHomes) {
+              await context.read<ExportAccessState>().unlockHome(id);
             }
-
-            if (unlockedHomes.contains(home.id) && context.mounted) {
-              // Navigate directly to PDF screen
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => HomeTransferPdfScreen(home: home),
-                ),
-              );
+            // Navigate to PDF if this home was unlocked
+            if (unlockedHomes.contains(home.id)) {
+              await _exportPdf(context, home);
             }
-          });
+          }
+        });
 
-          return AlertDialog(
-            title: const Text('Unlock Home Transfer'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('Choose how you’d like to unlock this home:'),
-                const SizedBox(height: 24),
+        return AlertDialog(
+          title: const Text('Unlock Home Transfer'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Choose how you’d like to unlock this home:'),
+              const SizedBox(height: 24),
 
-                // $59 Option
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              // $59 Option
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () async {
+                  purchaseManager.pendingHomeIds = [home.id];
+                  await purchaseManager.buyHomeUnlock(home.id);
+                },
+                child: const Text(
+                  '\$59 – Unlock this home permanently',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // $399 Option (annual)
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () async {
+                  final allHomeIds = homeState.allHomeIds();
+                  purchaseManager.pendingHomeIds = allHomeIds;
+                  await purchaseManager.buyUnlimitedYearly(allHomeIds);
+                },
+                child: const Column(
+                  children: [
+                    Text(
+                      '\$399/year – Unlimited Homes',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
-                  ),
-                  onPressed: () async {
-                    purchaseManager.pendingHomeIds = [home.id];
-                    await purchaseManager.buyHomeUnlock(home.id);
-                  },
-                  child: const Text(
-                    '\$59 – Unlock this home permanently',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // $399 Option
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                    SizedBox(height: 4),
+                    Text(
+                      'Best for active agents • Cancel anytime',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13),
                     ),
-                  ),
-                  onPressed: () async {
-                    final allHomeIds = homeState.allHomeIds();
-                    purchaseManager.pendingHomeIds = allHomeIds;
-                    await purchaseManager.buyUnlimitedYearly(allHomeIds);
-                  },
-                  child: const Column(
-                    children: [
-                      Text(
-                        '\$399/year – Unlimited Homes',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Best for active agents • Cancel anytime',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }
-
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
