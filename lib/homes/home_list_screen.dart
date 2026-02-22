@@ -9,14 +9,28 @@ import 'home_capture_screen.dart';
 import 'home_transfer_screen.dart';
 import '../state/agent_state.dart';
 import '../auth/settings_screen.dart';
+import '../homes/edit_home_screen.dart';
 
-class HomeListScreen extends StatelessWidget {
+class HomeListScreen extends StatefulWidget {
   const HomeListScreen({super.key});
+
+  @override
+  State<HomeListScreen> createState() => _HomeListScreenState();
+}
+
+class _HomeListScreenState extends State<HomeListScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final homeState = context.watch<HomeState>();
-    final homes = homeState.homes;
+    final allHomes = homeState.homes;
+
+    final homes = allHomes.where((home) {
+      return home.address
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase());
+    }).toList();
     final agent = context.watch<AgentState>().agent;
     // If agent accent color exists, use it; otherwise fallback to theme
     final accent = agent?.accentColor != null
@@ -90,7 +104,27 @@ class HomeListScreen extends StatelessWidget {
           ],
         ),
       )
-          : ListView.builder(
+      : Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Search homes...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
+      ),
+      Expanded(
+        child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 12),
               itemCount: homes.length,
               itemBuilder: (context, index) {
@@ -121,17 +155,36 @@ class HomeListScreen extends StatelessWidget {
                       'Added ${home.createdAt.toLocal().toString().split(' ').first}',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.ios_share, color: accent),
-                      onPressed: () {
+                    trailing: PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert, color: accent),
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditHomeScreen(home: home),
+                          ),
+                        );
+                      } else if (value == 'share') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => HomeTransferScreen(home: home),
                           ),
                         );
-                      },
-                    ),
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('Edit'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'share',
+                        child: Text('Share'),
+                      ),
+                    ],
+                  ),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -143,7 +196,11 @@ class HomeListScreen extends StatelessWidget {
                   ),
                 );
               },
+            
             ),
+      ),
+    ],
+  ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {

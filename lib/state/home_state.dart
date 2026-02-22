@@ -35,12 +35,19 @@ class HomeState extends ChangeNotifier {
   }
 
   /// Update an existing home
-  void updateHome(Home updated) {
-    final index = _homes.indexWhere((h) => h.id == updated.id);
-    if (index == -1) return;
 
-    _homes[index] = updated;
-    _save();
+
+    void updateHome(Home updatedHome) {
+    final index = _homes.indexWhere((h) => h.id == updatedHome.id);
+    if (index != -1) {
+      _homes[index] = updatedHome;
+      notifyListeners();
+    }
+  }
+
+  /// Delete an existing home
+  void deleteHome(String id) {
+    _homes.removeWhere((h) => h.id == id);
     notifyListeners();
   }
 

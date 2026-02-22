@@ -1,7 +1,8 @@
 //import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:home_story/homes/home_pdf_preview_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:printing/printing.dart';
+//import 'package:printing/printing.dart';
 import '../services/purchase_manager.dart';
 import '../models/home.dart';
 //import '../models/asset.dart';
@@ -11,7 +12,7 @@ import '../state/home_state.dart';
 import '../state/agent_state.dart';
 import '../state/export_access_state.dart';
 import '../utils/summary_helpers.dart';
-import '../utils/home_transfer_pdf.dart';
+//import '../utils/home_transfer_pdf.dart';
 
 class HomeTransferScreen extends StatelessWidget {
   final Home home;
@@ -105,18 +106,20 @@ class HomeTransferScreen extends StatelessWidget {
                 minimumSize: const Size.fromHeight(52),
               ),
               onPressed: () async {
-                if (!exportAccess.isHomeUnlocked(home.id)) {
-                  _showUnlockDialog(context);
-                  return;
+                if (exportAccess.isHomeUnlocked(home.id)) {
+                  // Already unlocked -> directly open PDF
+                  await _exportPdf(context, home);
+                } else {
+                  // Locked -> show unlock dialog
+                  _showUnlockDialog(context, home);
                 }
-                await _exportPdf(context, home);
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
+                ],
+              ),
+            ),
+          );
+        }
 
   Widget _agentBrandingCard(BuildContext context, AgentProfile agent, Color accent) {
     return Card(
@@ -146,116 +149,119 @@ class HomeTransferScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _exportPdf(BuildContext context, Home home) async {
-    final assets = context.read<AssetState>().assetsForHome(home.id);
-    final agent = context.read<AgentState>().agent;
-
-    final pdf = await buildHomeTransferPdf(
-    home: home,
-    assets: assets,
-    agent: agent,
-  );
-    await Printing.layoutPdf(onLayout: (_) => pdf.save());
-    if (context.mounted) {
-      Navigator.pop(context);
-    }
-  }
-void _showUnlockDialog(BuildContext context) {
-  final purchaseManager = context.read<PurchaseManager>();
-  final exportAccess = context.read<ExportAccessState>();
-  final homeState = context.read<HomeState>();
-  final agent = context.read<AgentState>().agent;
-  final accent = agent?.accentColor != null
-      ? Color(agent!.accentColor!)
-      : Theme.of(context).colorScheme.primary;
-
-  // We'll capture the context used for navigation inside the listener
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (dialogContext) {
-      // Set the unlock listener here, where dialogContext exists
-      purchaseManager.setOnUnlockListener((unlockedHomes) {
-        if (dialogContext.mounted) {
-          Navigator.pop(dialogContext); // safely closes the dialog
-        }
-      });
-
-      return AlertDialog(
-        title: const Text('Unlock Home Transfer'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Choose how you’d like to unlock this home:'),
-            const SizedBox(height: 24),
-
-            // $59 Option
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () async {
-                purchaseManager.pendingHomeIds = [home.id];
-                await purchaseManager.buyHomeUnlock(home.id);
-              },
-              child: const Text(
-                '\$59 – Unlock this home permanently',
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // $399 Option
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () async {
-                final allHomeIds = homeState.allHomeIds();
-                purchaseManager.pendingHomeIds = allHomeIds;
-                await purchaseManager.buyUnlimitedYearly(allHomeIds);
-              },
-              child: const Column(
-                children: [
-                  Text(
-                    '\$399/year – Unlimited Homes',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Best for active agents • Cancel anytime',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-    },
+ Future<void> _exportPdf(BuildContext context, Home home) async {
+  // Simply navigate to the PDF preview screen
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => HomeTransferPdfScreen(home: home),
+    ),
   );
 }
+      void _showUnlockDialog(BuildContext context, Home home) {
+      final purchaseManager = context.read<PurchaseManager>();
+      //final exportAccess = context.read<ExportAccessState>();
+      final homeState = context.read<HomeState>();
+      final agent = context.read<AgentState>().agent;
+      final accent = agent?.accentColor != null
+          ? Color(agent!.accentColor!)
+          : Theme.of(context).colorScheme.primary;
+
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          purchaseManager.setOnUnlockListener((unlockedHomes) async {
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext); // close the dialog
+            }
+
+            if (unlockedHomes.contains(home.id) && context.mounted) {
+              // Navigate directly to PDF screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HomeTransferPdfScreen(home: home),
+                ),
+              );
+            }
+          });
+
+          return AlertDialog(
+            title: const Text('Unlock Home Transfer'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Choose how you’d like to unlock this home:'),
+                const SizedBox(height: 24),
+
+                // $59 Option
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () async {
+                    purchaseManager.pendingHomeIds = [home.id];
+                    await purchaseManager.buyHomeUnlock(home.id);
+                  },
+                  child: const Text(
+                    '\$59 – Unlock this home permanently',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // $399 Option
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final allHomeIds = homeState.allHomeIds();
+                    purchaseManager.pendingHomeIds = allHomeIds;
+                    await purchaseManager.buyUnlimitedYearly(allHomeIds);
+                  },
+                  child: const Column(
+                    children: [
+                      Text(
+                        '\$399/year – Unlimited Homes',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Best for active agents • Cancel anytime',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
 
 }

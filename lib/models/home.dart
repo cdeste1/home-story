@@ -5,7 +5,7 @@ class Home {
 
   // Optional metadata (future-proofed)
   final int? yearBuilt;
-  final int? squareFeet;
+  final int? squareFeet;  
   final String? utilities;
   final String? hoaInfo;
   final String? exteriorImagePath;
@@ -20,6 +20,28 @@ class Home {
     this.hoaInfo,
     this.exteriorImagePath,
   });
+
+  Home copyWith({
+  String? id,
+  String? address,
+  DateTime? createdAt,
+  int? yearBuilt,
+  int? squareFeet,
+  String? utilities,
+  String? hoaInfo,
+  String? exteriorImagePath,
+}) {
+  return Home(
+    id: id ?? this.id,
+    address: address ?? this.address,
+    createdAt: createdAt ?? this.createdAt,
+    yearBuilt: yearBuilt ?? this.yearBuilt,
+    squareFeet: squareFeet ?? this.squareFeet,
+    utilities: utilities ?? this.utilities,
+    hoaInfo: hoaInfo ?? this.hoaInfo,
+    exteriorImagePath: exteriorImagePath ?? this.exteriorImagePath,
+  );
+}
 
   factory Home.fromJson(Map<String, dynamic> json) {
     return Home(

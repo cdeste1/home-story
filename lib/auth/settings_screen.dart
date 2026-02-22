@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../state/export_access_state.dart';
 import '../services/purchase_manager.dart';
-
+import '../auth/edit_agent_screen.dart';
 import '../state/agent_state.dart';
 import '../utils/privacy_policy_screen.dart';
 import '../utils/terms_screen.dart';
@@ -66,6 +66,22 @@ class SettingsScreen extends StatelessWidget {
                     : "Pay Per Home",
               ),
             ),
+          ),
+
+          const SizedBox(height: 24),
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditAgentScreen()),
+              );
+            },
+            child: const Text("Edit Profile"),
           ),
 
           const SizedBox(height: 24),

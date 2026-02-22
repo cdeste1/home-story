@@ -36,4 +36,11 @@ class AgentState extends ChangeNotifier {
     await prefs.remove(_storageKey);
     notifyListeners();
   }
+
+  // Update Agent information
+  Future<void> updateAgent(AgentProfile updatedAgent) async {
+  await save(updatedAgent);
+}
+
+
 }
