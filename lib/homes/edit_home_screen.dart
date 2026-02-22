@@ -14,11 +14,22 @@ class EditHomeScreen extends StatefulWidget {
 
 class _EditHomeScreenState extends State<EditHomeScreen> {
   late TextEditingController _addressController;
+  late TextEditingController _yearController;
+  late TextEditingController _sqftController;
+  late TextEditingController _utilitiesController;
+  late TextEditingController _hoaController;
+//how to handle the image????
+  String? _exteriorImagePath;
 
   @override
   void initState() {
     super.initState();
     _addressController = TextEditingController(text: widget.home.address);
+    //_yearController = TextEditingController(int: widget.home.yearBuilt);
+    //_sqftController = TextEditingController(int: widget.home.squareFeet);
+    _utilitiesController = TextEditingController(text:widget.home.utilities);
+    _hoaController = TextEditingController(text: widget.home.hoaInfo);  
+
   }
 
   @override
@@ -35,6 +46,20 @@ class _EditHomeScreenState extends State<EditHomeScreen> {
               controller: _addressController,
               decoration: const InputDecoration(
                 labelText: 'Address',
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _utilitiesController,
+              decoration: const InputDecoration(
+                labelText: 'Utilities (Gas, Electric, Water)',
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _hoaController,
+              decoration: const InputDecoration(
+                labelText: 'HOA Info (optional)',
               ),
             ),
             const SizedBox(height: 24),
