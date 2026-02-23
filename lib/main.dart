@@ -21,11 +21,11 @@ void main()
         ChangeNotifierProvider(create: (_) => HomeState()),
         ChangeNotifierProvider(create: (_) => AssetState()),
         ChangeNotifierProvider(create: (_) => AgentState()),
-        ChangeNotifierProvider(create: (_) => ExportAccessState()),
+        ChangeNotifierProvider.value(value: exportAccessState), // ← use the loaded instance
+        ChangeNotifierProvider(create: (_) => PurchaseManager()), // ← ChangeNotifier now
 
-        Provider(
+        ChangeNotifierProvider(
           create: (_) => PurchaseManager(),
-          dispose: (_, manager) => manager.dispose(),
         ),
       ],
       child: const HomeStoryApp(),

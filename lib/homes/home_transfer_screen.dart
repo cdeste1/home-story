@@ -37,7 +37,6 @@ class HomeTransferScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Address Header
             Text(
               home.address,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -54,11 +53,9 @@ class HomeTransferScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Agent Branding Card
             if (agent != null) _agentBrandingCard(context, agent, accent),
             const SizedBox(height: 16),
 
-            // Asset summary cards
             Expanded(
               child: ListView(
                 children: summary.entries.map((entry) {
@@ -68,8 +65,7 @@ class HomeTransferScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     child: ListTile(
-                      leading:
-                          Icon(Icons.check_circle_outline, color: accent),
+                      leading: Icon(Icons.check_circle_outline, color: accent),
                       title: Text(entry.key.name.toUpperCase()),
                       trailing: Text(
                         entry.value.toString(),
@@ -81,7 +77,6 @@ class HomeTransferScreen extends StatelessWidget {
               ),
             ),
 
-            // Export Button
             ElevatedButton.icon(
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(
@@ -101,10 +96,8 @@ class HomeTransferScreen extends StatelessWidget {
               onPressed: () async {
                 if (exportAccess.isHomeUnlocked(home.id) ||
                     exportAccess.hasUnlimitedAccess()) {
-                  // Already unlocked -> open PDF
                   await _exportPdf(context, home);
                 } else {
-                  // Locked -> show unlock dialog
                   _showUnlockDialog(context, home);
                 }
               },
@@ -164,97 +157,165 @@ class HomeTransferScreen extends StatelessWidget {
         ? Color(agent!.accentColor!)
         : Theme.of(context).colorScheme.primary;
 
+    // Set the callback BEFORE showing the dialog.
+    // When the purchase succeeds, this will close the dialog and navigate to PDF.
+    purchaseManager.setOnUnlockListener((unlockedIds) {
+      // Pop the dialog if it's still showing
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      // Navigate to PDF if this home was among the unlocked ones
+      if (unlockedIds.contains(home.id) || unlockedIds.isNotEmpty) {
+        _exportPdf(context, home);
+      }
+    });
+
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
-        // Set listener for purchase completion
-        purchaseManager.setOnUnlockListener((unlockedHomes) async {
-          if (dialogContext.mounted) Navigator.pop(dialogContext);
-
-          if (context.mounted) {
-            for (final id in unlockedHomes) {
-              await context.read<ExportAccessState>().unlockHome(id);
-            }
-            // Navigate to PDF if this home was unlocked
-            if (unlockedHomes.contains(home.id)) {
-              await _exportPdf(context, home);
-            }
-          }
-        });
-
-        return AlertDialog(
-          title: const Text('Unlock Home Transfer'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Choose how you’d like to unlock this home:'),
-              const SizedBox(height: 24),
-
-              // $59 Option
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () async {
-                  purchaseManager.pendingHomeIds = [home.id];
-                  await purchaseManager.buyHomeUnlock(home.id);
-                },
-                child: const Text(
-                  '\$59 – Unlock this home permanently',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // $399 Option (annual)
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () async {
-                  final allHomeIds = homeState.allHomeIds();
-                  purchaseManager.pendingHomeIds = allHomeIds;
-                  await purchaseManager.buyUnlimitedYearly(allHomeIds);
-                },
-                child: const Column(
-                  children: [
-                    Text(
-                      '\$399/year – Unlimited Homes',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Best for active agents • Cancel anytime',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
-              ),
-            ],
-          ),
+        return _UnlockDialog(
+          home: home,
+          accent: accent,
+          purchaseManager: purchaseManager,
+          homeState: homeState,
+          onCancel: () {
+            // Clear the listener if the user cancels without purchasing
+            purchaseManager.onUnlockListener = null;
+            Navigator.pop(dialogContext);
+          },
         );
       },
+    );
+  }
+}
+
+/// Stateful dialog that watches PurchaseManager for loading/error states.
+class _UnlockDialog extends StatelessWidget {
+  final Home home;
+  final Color accent;
+  final PurchaseManager purchaseManager;
+  final HomeState homeState;
+  final VoidCallback onCancel;
+
+  const _UnlockDialog({
+    required this.home,
+    required this.accent,
+    required this.purchaseManager,
+    required this.homeState,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch PurchaseManager so loading/error states rebuild the dialog
+    return ChangeNotifierProvider.value(
+      value: purchaseManager,
+      child: Consumer<PurchaseManager>(
+        builder: (context, pm, _) {
+          return AlertDialog(
+            title: const Text('Unlock Home Transfer'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text("Choose how you'd like to unlock this home:"),
+                const SizedBox(height: 24),
+
+                if (pm.status == PurchaseFlowStatus.error) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      pm.errorMessage ?? 'Purchase failed. Please try again.',
+                      style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // $59 single home
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: pm.isLoading
+                      ? null // disable while processing
+                      : () async {
+                          await pm.buyHomeUnlock(home.id);
+                        },
+                  child: pm.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          '\$59 – Unlock this home permanently',
+                          textAlign: TextAlign.center,
+                        ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // $399 annual
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: pm.isLoading
+                      ? null
+                      : () async {
+                          final allHomeIds = homeState.allHomeIds();
+                          await pm.buyUnlimitedYearly(allHomeIds);
+                        },
+                  child: pm.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Column(
+                          children: [
+                            Text(
+                              '\$399/year – Unlimited Homes',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Best for active agents • Cancel anytime',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                ),
+
+                const SizedBox(height: 18),
+
+                TextButton(
+                  onPressed: pm.isLoading ? null : onCancel,
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

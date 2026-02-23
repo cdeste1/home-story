@@ -23,7 +23,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
         centerTitle: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0),
+        elevation: 0,
+         actions: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: (){Navigator.pop(context);},
+              ),
+               
+          ],),
         body: const Padding(
         padding: EdgeInsets.all(16),
         child: SingleChildScrollView(
