@@ -47,19 +47,20 @@ Future<pw.Document> buildHomeTransferPdf({
             pw.SizedBox(height: 24),
 
             // Exterior Image or Placeholder
-            pw.Container(
-              height: 220,
-              width: double.infinity,
-              decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.grey300),
-                borderRadius: pw.BorderRadius.all(pw.Radius.circular(16)),
-              ),
-              // FIX 1: use safeImage — no crash if exteriorImagePath is null or file is missing
-              child: safeImage(
-                home.exteriorImagePath,
-                width: double.infinity,
+            pw.ClipRRect(
+              horizontalRadius: 16,
+              verticalRadius: 16,
+              child: pw.Container(
                 height: 220,
-                fit: pw.BoxFit.cover,
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.all(pw.Radius.circular(16)),
+                ),
+                child: safeImage(
+                  home.exteriorImagePath,
+                  height: 220,
+                  fit: pw.BoxFit.cover,
+                ),
               ),
             ),
             pw.SizedBox(height: 36),
@@ -89,7 +90,7 @@ Future<pw.Document> buildHomeTransferPdf({
             // Agent Info
             if (agent != null) ...[
               // FIX 2: use safeImage — no crash if logoPath is null or file is missing
-              safeImage(agent.logoPath, width: 120, height: 60, fit: pw.BoxFit.scaleDown),
+              safeImage(agent.logoPath, height: 60, fit: pw.BoxFit.scaleDown),
               pw.SizedBox(height: 6),
               pw.Text(
                 agent.name,
@@ -196,7 +197,7 @@ Future<pw.Document> buildHomeTransferPdf({
       if (agent.email != null) pw.Text(agent.email!),
       if (agent.phone != null) pw.Text(agent.phone!),
       // FIX 3: use safeImage here too
-      safeImage(agent.logoPath, width: 120, height: 60, fit: pw.BoxFit.cover),
+      safeImage(agent.logoPath, height: 60, fit: pw.BoxFit.cover),
     ]);
   }
 

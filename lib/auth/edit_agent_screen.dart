@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../models/agent_profile.dart';
 import '../state/agent_state.dart';
@@ -18,15 +19,13 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
   late TextEditingController _brokerageController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
-  int? _selectedAccentColor;     
+  int? _selectedAccentColor;
   String? _selectedLogoPath;
 
   @override
   void initState() {
     super.initState();
-
     final agent = context.read<AgentState>().agent;
-
     _nameController = TextEditingController(text: agent?.name ?? '');
     _brokerageController = TextEditingController(text: agent?.brokerage ?? '');
     _emailController = TextEditingController(text: agent?.email ?? '');
@@ -35,13 +34,28 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
     _selectedLogoPath = agent?.logoPath;
   }
 
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedLogoPath = picked.path;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final agentState = context.read<AgentState>();
     final agent = agentState.agent;
-    final accent = agent?.accentColor != null
-      ? Color(agent!.accentColor!)
-      : Theme.of(context).colorScheme.primary;
+    final accent = _selectedAccentColor != null
+        ? Color(_selectedAccentColor!)
+        : agent?.accentColor != null
+            ? Color(agent!.accentColor!)
+            : Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,12 +70,9 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
           ),
         ),
         title: const Text('Home Story'),
-
         centerTitle: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        
-
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -92,10 +103,9 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
 
               const SizedBox(height: 24),
 
-            /// Accent Color Preview
+              // Accent Color
               const Text("Accent Color"),
               const SizedBox(height: 8),
-
               Wrap(
                 spacing: 12,
                 children: [
@@ -107,11 +117,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                   Colors.black,
                 ].map((color) {
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedAccentColor = color.value;
-                      });
-                    },
+                    onTap: () => setState(() => _selectedAccentColor = color.value),
                     child: CircleAvatar(
                       backgroundColor: color,
                       radius: 20,
@@ -125,28 +131,54 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
 
               const SizedBox(height: 24),
 
-              /// Logo Preview
+              // Logo
               const Text("Logo"),
               const SizedBox(height: 8),
 
-              if (_selectedLogoPath != null)
-                Image.file(
-                  File(_selectedLogoPath!),
-                  height: 80,
+              GestureDetector(
+                onTap: _pickLogo,
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: accent, width: 1.5),
+                    borderRadius: BorderRadius.circular(12),
+                    color: accent.withOpacity(0.05),
+                  ),
+                  child: _selectedLogoPath != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            File(_selectedLogoPath!),
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate_outlined,
+                                color: accent, size: 32),
+                            const SizedBox(height: 6),
+                            Text('Tap to add logo',
+                                style: TextStyle(color: accent, fontSize: 13)),
+                          ],
+                        ),
                 ),
-
-              TextButton(
-                onPressed: () async {
-                  // plug in your existing image picker here
-                },
-                child: const Text("Change Logo"),
               ),
+
+              if (_selectedLogoPath != null)
+                TextButton(
+                  onPressed: _pickLogo,
+                  child: const Text("Change Logo"),
+                ),
 
               const SizedBox(height: 32),
 
-
-
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
                   if (!_formKey.currentState!.validate()) return;
 
@@ -156,17 +188,15 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                     email: _emailController.text.trim(),
                     phone: _phoneController.text.trim(),
                     accentColor: _selectedAccentColor ?? agent?.accentColor,
-                    logoPath: agent?.logoPath,
+                    logoPath: _selectedLogoPath, // ← was always using agent?.logoPath before
                   );
 
                   await agentState.save(updatedAgent);
 
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
+                  if (context.mounted) Navigator.pop(context);
                 },
                 child: const Text("Save Changes"),
-              )
+              ),
             ],
           ),
         ),
