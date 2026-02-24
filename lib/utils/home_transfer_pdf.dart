@@ -54,31 +54,13 @@ Future<pw.Document> buildHomeTransferPdf({
                 border: pw.Border.all(color: PdfColors.grey300),
                 borderRadius: pw.BorderRadius.all(pw.Radius.circular(16)),
               ),
-              child: home.exteriorImagePath != null
-                  ? pw.Image(
-                      pw.MemoryImage(loadImageBytesSync(home.exteriorImagePath!)),
-                      fit: pw.BoxFit.cover,
-                    )
-                  : pw.Center(
-                      child: pw.Column(
-                        mainAxisAlignment: pw.MainAxisAlignment.center,
-                        children: [
-                          pw.Icon(
-                            pw.IconData(0xe88a), // home icon
-                            size: 48,
-                            color: PdfColors.grey500,
-                          ),
-                          pw.SizedBox(height: 8),
-                          pw.Text(
-                            'Exterior View',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              color: PdfColors.grey600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              // FIX 1: use safeImage — no crash if exteriorImagePath is null or file is missing
+              child: safeImage(
+                home.exteriorImagePath,
+                width: double.infinity,
+                height: 220,
+                fit: pw.BoxFit.cover,
+              ),
             ),
             pw.SizedBox(height: 36),
 
@@ -106,13 +88,9 @@ Future<pw.Document> buildHomeTransferPdf({
 
             // Agent Info
             if (agent != null) ...[
-              //Add Realtor Logo
-               pw.Image(
-                pw.MemoryImage(loadImageBytesSync(agent.logoPath!)),
-                fit: pw.BoxFit.scaleDown,
-              ),              
+              // FIX 2: use safeImage — no crash if logoPath is null or file is missing
+              safeImage(agent.logoPath, width: 120, height: 60, fit: pw.BoxFit.scaleDown),
               pw.SizedBox(height: 6),
-                
               pw.Text(
                 agent.name,
                 style: pw.TextStyle(
@@ -217,7 +195,8 @@ Future<pw.Document> buildHomeTransferPdf({
       pw.Text(agent.brokerage),
       if (agent.email != null) pw.Text(agent.email!),
       if (agent.phone != null) pw.Text(agent.phone!),
-      if (agent.logoPath != null) pw.Image(pw.MemoryImage(loadImageBytesSync(agent.logoPath!)), fit: pw.BoxFit.cover,)
+      // FIX 3: use safeImage here too
+      safeImage(agent.logoPath, width: 120, height: 60, fit: pw.BoxFit.cover),
     ]);
   }
 
@@ -231,7 +210,7 @@ Future<pw.Document> buildHomeTransferPdf({
       build: (_) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pageHeader(logoBytes, size: 50), // logo top right
+          pageHeader(logoBytes, size: 50),
           pw.Spacer(),
           pw.Center(
             child: pw.Text(
@@ -327,10 +306,8 @@ pw.Widget _assetBlock(Asset asset) {
           width: 56,
           height: 56,
           margin: const pw.EdgeInsets.only(right: 12),
-          child: pw.Image(
-            pw.MemoryImage(loadImageBytesSync(asset.imagePath)),
-            fit: pw.BoxFit.cover,
-          ),
+          // FIX 3: use safeImage — asset.imagePath may be null or file may be gone
+          child: safeImage(asset.imagePath, width: 56, height: 56),
         ),
         pw.Expanded(
           child: pw.Column(
