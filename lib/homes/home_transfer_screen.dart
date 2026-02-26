@@ -9,6 +9,7 @@ import '../state/agent_state.dart';
 import '../state/export_access_state.dart';
 import '../utils/summary_helpers.dart';
 import 'home_pdf_preview_screen.dart';
+import '../utils/debug_purchase_screen.dart';
 
 class HomeTransferScreen extends StatelessWidget {
   final Home home;
@@ -211,9 +212,12 @@ class _UnlockDialog extends StatelessWidget {
         Navigator.push(
           parentContext,
           MaterialPageRoute(
-            builder: (_) => HomeTransferPdfScreen(home: home),
+            builder: (_) => DebugPurchaseScreen(
+          unlockedIds: unlockedIds,
+          triggeredFromHomeId: home.id, //HomeTransferPdfScreen(home: home),
           ),
-        );
+        ),
+      );
       }
     });
   }
