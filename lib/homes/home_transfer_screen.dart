@@ -157,18 +157,9 @@ class HomeTransferScreen extends StatelessWidget {
         ? Color(agent!.accentColor!)
         : Theme.of(context).colorScheme.primary;
 
-    // Set the callback BEFORE showing the dialog.
-    // When the purchase succeeds, this will close the dialog and navigate to PDF.
-    purchaseManager.setOnUnlockListener((unlockedIds) {
-      // Pop the dialog if it's still showing
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      // Navigate to PDF if this home was among the unlocked ones
-      if (unlockedIds.contains(home.id) || unlockedIds.isNotEmpty) {
-        _exportPdf(context, home);
-      }
-    });
+    // Do NOT set the listener here — set it only when the user taps a buy button
+    // inside _UnlockDialog. Setting it here means it's active before the user
+    // has chosen anything, which allows stale transactions to trigger navigation.
 
     showDialog(
       context: context,
@@ -179,8 +170,8 @@ class HomeTransferScreen extends StatelessWidget {
           accent: accent,
           purchaseManager: purchaseManager,
           homeState: homeState,
+          parentContext: context, // pass parent context for navigation after dialog closes
           onCancel: () {
-            // Clear the listener if the user cancels without purchasing
             purchaseManager.onUnlockListener = null;
             Navigator.pop(dialogContext);
           },
@@ -190,12 +181,12 @@ class HomeTransferScreen extends StatelessWidget {
   }
 }
 
-/// Stateful dialog that watches PurchaseManager for loading/error states.
 class _UnlockDialog extends StatelessWidget {
   final Home home;
   final Color accent;
   final PurchaseManager purchaseManager;
   final HomeState homeState;
+  final BuildContext parentContext; // used for navigation after dialog is gone
   final VoidCallback onCancel;
 
   const _UnlockDialog({
@@ -203,12 +194,32 @@ class _UnlockDialog extends StatelessWidget {
     required this.accent,
     required this.purchaseManager,
     required this.homeState,
+    required this.parentContext,
     required this.onCancel,
   });
 
+  void _registerListener(BuildContext dialogContext) {
+    // Set the listener at the moment the user taps buy — not before.
+    // This ensures no stale transaction can trigger it before the user acts.
+    purchaseManager.setOnUnlockListener((unlockedIds) {
+      // Close the dialog
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
+      // Navigate to PDF only if this specific home was unlocked
+      if (parentContext.mounted && unlockedIds.contains(home.id)) {
+        Navigator.push(
+          parentContext,
+          MaterialPageRoute(
+            builder: (_) => HomeTransferPdfScreen(home: home),
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Watch PurchaseManager so loading/error states rebuild the dialog
     return ChangeNotifierProvider.value(
       value: purchaseManager,
       child: Consumer<PurchaseManager>(
@@ -246,8 +257,10 @@ class _UnlockDialog extends StatelessWidget {
                     ),
                   ),
                   onPressed: pm.isLoading
-                      ? null // disable while processing
+                      ? null
                       : () async {
+                          // Register listener right before initiating purchase
+                          _registerListener(context);
                           await pm.buyHomeUnlock(home.id);
                         },
                   child: pm.isLoading
@@ -277,6 +290,8 @@ class _UnlockDialog extends StatelessWidget {
                   onPressed: pm.isLoading
                       ? null
                       : () async {
+                          // Register listener right before initiating purchase
+                          _registerListener(context);
                           final allHomeIds = homeState.allHomeIds();
                           await pm.buyUnlimitedYearly(allHomeIds);
                         },
