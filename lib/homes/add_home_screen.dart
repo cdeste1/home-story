@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/home.dart';
 import '../state/agent_state.dart';
 
@@ -41,7 +42,7 @@ class _AddHomeScreenState extends State<AddHomeScreen> {
     if (address.isEmpty) return;
 
     final home = Home(
-      id: Random().nextInt(100000).toString(),
+      id: const Uuid().v4(),
       address: address,
       createdAt: DateTime.now(),
       yearBuilt: int.tryParse(_yearController.text),
