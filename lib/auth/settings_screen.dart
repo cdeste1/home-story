@@ -146,20 +146,17 @@ TextButton(
   },
   child: const Text("Terms of Service"),
 ),
-          if (kDebugMode)
-            const SizedBox(height: 32),
-
-          if (kDebugMode)
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                context.read<ExportAccessState>().toggleDevForceUnlock();
-              },
-              child: const Text("DEV: Toggle Unlimited Access"),
-            ),
+          
+       ///Clear all homes   
+          ElevatedButton(
+  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+  onPressed: () async {
+    await context.read<ExportAccessState>().clearAll();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Purchases cleared')));
+  },
+  child: const Text('DEV: Clear Purchases'),
+),
         ],
       ),
     );

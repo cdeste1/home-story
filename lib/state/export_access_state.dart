@@ -69,5 +69,15 @@ class ExportAccessState extends ChangeNotifier {
     notifyListeners();
   }
 
+  //Debug Unlock all homes
+  Future<void> clearAll() async {
+  _unlockedHomeIds = {};
+  _subscriptionExpiry = null;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(_homesKey);
+  await prefs.remove(_subExpiryKey);
+  notifyListeners();
+  }
+
   DateTime? get subscriptionExpiry => _subscriptionExpiry;
 }
