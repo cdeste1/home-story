@@ -23,10 +23,6 @@ void main()
         ChangeNotifierProvider(create: (_) => AgentState()),
         ChangeNotifierProvider.value(value: exportAccessState), // ← use the loaded instance
         ChangeNotifierProvider(create: (_) => PurchaseManager()), // ← ChangeNotifier now
-
-        ChangeNotifierProvider(
-          create: (_) => PurchaseManager(),
-        ),
       ],
       child: const HomeStoryApp(),
     ),
