@@ -42,6 +42,8 @@ class PurchaseManager extends ChangeNotifier {
 
     final response = await _iap.queryProductDetails({homeUnlockId, unlimitedYearlyId});
     _products = response.productDetails;
+    debugPrint('Products loaded: ${_products.map((p) => p.id).toList()}');
+    debugPrint('Not found: ${response.notFoundIDs}');
 
     _subscription = _iap.purchaseStream.listen(
       (purchases) => _handlePurchaseUpdates(purchases, context),
@@ -96,6 +98,7 @@ class PurchaseManager extends ChangeNotifier {
     BuildContext context,
   ) async {
     for (final purchase in purchases) {
+      debugPrint('IAP event: ${purchase.productID} status: ${purchase.status}');
       switch (purchase.status) {
         case PurchaseStatus.pending:
           // IAP sheet is open / Apple is processing — keep showing loading
