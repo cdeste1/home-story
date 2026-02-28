@@ -9,7 +9,6 @@ import '../state/agent_state.dart';
 import '../state/export_access_state.dart';
 import '../utils/summary_helpers.dart';
 import 'home_pdf_preview_screen.dart';
-import '../utils/debug_purchase_screen.dart';
 
 class HomeTransferScreen extends StatelessWidget {
   final Home home;
@@ -114,7 +113,7 @@ class HomeTransferScreen extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: accent.withOpacity(0.1),
+      color: accent.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -212,10 +211,8 @@ class _UnlockDialog extends StatelessWidget {
         Navigator.push(
           parentContext,
           MaterialPageRoute(
-            builder: (_) => DebugPurchaseScreen(
-          unlockedIds: unlockedIds,
-          triggeredFromHomeId: home.id, //HomeTransferPdfScreen(home: home),
-          ),
+            builder: (_) => HomeTransferPdfScreen(home: home),
+          
         ),
       );
       }

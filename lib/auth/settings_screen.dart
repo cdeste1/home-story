@@ -1,10 +1,7 @@
 import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import '../state/export_access_state.dart';
 import '../services/purchase_manager.dart';
 import '../auth/edit_agent_screen.dart';
@@ -19,7 +16,6 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final exportAccess = context.watch<ExportAccessState>();
-    final purchaseManager = PurchaseManager();
     final agent = context.watch<AgentState>().agent;
     final accent = agent?.accentColor != null
     ? Color(agent!.accentColor!)
@@ -93,8 +89,7 @@ class SettingsScreen extends StatelessWidget {
                 foregroundColor: Colors.white,
               ),
             onPressed: () async {
-              await purchaseManager.initialize(context);
-              await InAppPurchase.instance.restorePurchases();
+              await context.read<PurchaseManager>().restorePurchases();
             },
             child: const Text("Restore Purchases"),
           ),
@@ -147,16 +142,6 @@ TextButton(
   child: const Text("Terms of Service"),
 ),
           
-       ///Clear all homes   
-          ElevatedButton(
-  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-  onPressed: () async {
-    await context.read<ExportAccessState>().clearAll();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Purchases cleared')));
-  },
-  child: const Text('DEV: Clear Purchases'),
-),
         ],
       ),
     );

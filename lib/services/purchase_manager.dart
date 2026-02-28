@@ -3,29 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 import '../state/export_access_state.dart';
+import '../state/home_state.dart';
+
 
 enum PurchaseFlowStatus { idle, pending, success, error }
 
-/// PurchaseManager must be registered as a single ChangeNotifierProvider
-/// at the app root and initialized once at startup via initialize().
 class PurchaseManager extends ChangeNotifier {
   final InAppPurchase _iap = InAppPurchase.instance;
 
   static const homeUnlockId = 'home_unlock_credit';
-  static const unlimitedYearlyId = 'unlimited_yearly';
+  static const unlimitedYearlyId = 'unlimited_annual';
 
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   List<ProductDetails> _products = [];
 
   List<String> pendingHomeIds = [];
-
-  // Callback fired after a successful purchase with the list of unlocked home IDs.
   Function(List<String>)? onUnlockListener;
 
-  // KEY FIX: only true after the user taps a buy button.
-  // Prevents stale sandbox transactions replayed on startup from
-  // triggering navigation before the user has done anything.
   bool _isUserInitiatedPurchase = false;
+  bool _isRestoreInProgress = false;
 
   PurchaseFlowStatus _status = PurchaseFlowStatus.idle;
   PurchaseFlowStatus get status => _status;
@@ -39,7 +35,14 @@ class PurchaseManager extends ChangeNotifier {
     onUnlockListener = listener;
   }
 
-  /// Call once at app startup from main() or your root widget's initState.
+  void resetToIdle() {
+    _isUserInitiatedPurchase = false;
+    _status = PurchaseFlowStatus.idle;
+    pendingHomeIds.clear();
+    onUnlockListener = null;
+    notifyListeners();
+  }
+
   Future<void> initialize(BuildContext context) async {
     await _subscription?.cancel();
 
@@ -66,9 +69,15 @@ class PurchaseManager extends ChangeNotifier {
     try {
       final product = _products.firstWhere(
         (p) => p.id == homeUnlockId,
-        orElse: () => throw Exception('Product $homeUnlockId not found. Check App Store Connect product ID.'),
+        orElse: () => throw Exception('Product $homeUnlockId not found.'),
       );
-      await _iap.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: product));
+      await _iap.buyNonConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+      );
+      // Timeout fallback in case Apple never fires canceled
+      Future.delayed(const Duration(seconds: 60), () {
+        if (_status == PurchaseFlowStatus.pending) resetToIdle();
+      });
     } catch (e) {
       _isUserInitiatedPurchase = false;
       _status = PurchaseFlowStatus.error;
@@ -87,15 +96,32 @@ class PurchaseManager extends ChangeNotifier {
     try {
       final product = _products.firstWhere(
         (p) => p.id == unlimitedYearlyId,
-        orElse: () => throw Exception('Product $unlimitedYearlyId not found. Check App Store Connect product ID.'),
+        orElse: () => throw Exception('Product $unlimitedYearlyId not found.'),
       );
-      await _iap.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: product));
+      // Use buyNonConsumable — the in_app_purchase plugin uses the same call
+      // for auto-renewable subscriptions. Apple handles renewal automatically.
+      await _iap.buyNonConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+      );
+      // Timeout fallback in case Apple never fires canceled
+      Future.delayed(const Duration(seconds: 60), () {
+        if (_status == PurchaseFlowStatus.pending) resetToIdle();
+      });
     } catch (e) {
       _isUserInitiatedPurchase = false;
       _status = PurchaseFlowStatus.error;
       _errorMessage = e.toString();
       notifyListeners();
     }
+  }
+
+  /// Call this from the Restore Purchases button in settings.
+  Future<void> restorePurchases() async {
+    _isRestoreInProgress = true;
+    await _iap.restorePurchases();
+    // Reset flag after stream has time to deliver restored transactions
+    await Future.delayed(const Duration(seconds: 3));
+    _isRestoreInProgress = false;
   }
 
   void _handlePurchaseUpdates(
@@ -112,15 +138,23 @@ class PurchaseManager extends ChangeNotifier {
           break;
 
         case PurchaseStatus.purchased:
-        case PurchaseStatus.restored:
+          // Only handle if the user actually tapped a buy button
           if (_isUserInitiatedPurchase) {
-            // Real purchase the user just made — unlock and navigate
             await _handleSuccessfulPurchase(purchase, context);
           } else {
-            // Stale transaction replayed from a previous session on startup.
-            // Still complete it to clear Apple's queue, but do NOT
-            // unlock homes or fire the navigation callback.
-            debugPrint('PurchaseManager: completing stale transaction ${purchase.productID}');
+            if (purchase.pendingCompletePurchase) {
+              await _iap.completePurchase(purchase);
+            }
+          }
+          break;
+
+        case PurchaseStatus.restored:
+          // Only handle restores when user explicitly tapped Restore Purchases
+          if (_isRestoreInProgress) {
+            await _handleRestoredPurchase(purchase, context);
+          } else {
+            // Automatic startup replay — just complete it, don't unlock anything
+            debugPrint('PurchaseManager: ignoring startup restore of ${purchase.productID}');
             if (purchase.pendingCompletePurchase) {
               await _iap.completePurchase(purchase);
             }
@@ -143,12 +177,14 @@ class PurchaseManager extends ChangeNotifier {
           _isUserInitiatedPurchase = false;
           _status = PurchaseFlowStatus.idle;
           pendingHomeIds.clear();
+          onUnlockListener = null;
           notifyListeners();
           break;
       }
     }
   }
 
+  /// Handles a brand new purchase the user just completed.
   Future<void> _handleSuccessfulPurchase(
     PurchaseDetails purchase,
     BuildContext context,
@@ -158,24 +194,26 @@ class PurchaseManager extends ChangeNotifier {
     final exportAccess = context.read<ExportAccessState>();
 
     if (purchase.productID == unlimitedYearlyId) {
-      final purchaseDate = DateTime.fromMillisecondsSinceEpoch(
-        int.tryParse(purchase.transactionDate ?? '') ?? DateTime.now().millisecondsSinceEpoch,
-      );
-      final expiry = purchaseDate.add(const Duration(days: 365));
-      await exportAccess.setSubscriptionExpiry(expiry);
+      // Activate subscription with 1 year expiry from now
+      final expiry = DateTime.now().add(const Duration(days: 365));
+      await exportAccess.activateSubscription(expiry);
+      // For a subscription, unlock all homes
+      for (final id in pendingHomeIds) {
+        await exportAccess.unlockHome(id);
+      }
+    } else if (purchase.productID == homeUnlockId) {
+      for (final id in pendingHomeIds) {
+        await exportAccess.unlockHome(id);
+      }
     }
 
     final unlockedIds = List<String>.from(pendingHomeIds);
-    for (final id in unlockedIds) {
-      await exportAccess.unlockHome(id);
-    }
-
     _isUserInitiatedPurchase = false;
     _status = PurchaseFlowStatus.success;
     pendingHomeIds.clear();
     notifyListeners();
 
-    // Fire the callback — dismisses dialog and navigates to PDF
+    // Fire callback — dismisses dialog and navigates to PDF
     final listener = onUnlockListener;
     onUnlockListener = null;
     if (listener != null) {
@@ -189,6 +227,37 @@ class PurchaseManager extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 300));
     _status = PurchaseFlowStatus.idle;
     notifyListeners();
+  }
+
+  /// Handles a purchase restored via the Restore Purchases button.
+  Future<void> _handleRestoredPurchase(
+    PurchaseDetails purchase,
+    BuildContext context,
+  ) async {
+    if (!context.mounted) return;
+
+    final exportAccess = context.read<ExportAccessState>();
+
+    if (purchase.productID == unlimitedYearlyId) {
+      // For a restored subscription we don't know the exact expiry from
+      // the plugin — set 1 year from now as a best estimate.
+      // For production, use receipt validation to get the real expiry.
+      final expiry = DateTime.now().add(const Duration(days: 365));
+      await exportAccess.activateSubscription(expiry);
+    } else if (purchase.productID == homeUnlockId) {
+      // For a restored home unlock, we don't know which home it was for
+      // (the purchase doesn't carry that info). We can't know which specific home was originally unlocked,
+      // so unlock all current homes as a fair restoration.
+        final homeState = context.read<HomeState>();
+        for (final id in homeState.allHomeIds()) {
+          await exportAccess.unlockHome(id);
+        }
+      //debugPrint('PurchaseManager: restored home unlock — cannot determine home ID');
+    }
+
+    if (purchase.pendingCompletePurchase) {
+      await _iap.completePurchase(purchase);
+    }
   }
 
   @override

@@ -42,7 +42,7 @@ class _AgentSignupScreenState extends State<AgentSignupScreen> {
       brokerage: _brokerageCtrl.text.trim(),
       email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-      accentColor: _accent.value,
+      accentColor: _accent.toARGB32(),
       logoPath: _logoPath,
     );
 

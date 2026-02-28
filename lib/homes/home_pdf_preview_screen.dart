@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
 import '../models/home.dart';
-import '../models/asset.dart';
-import '../models/agent_profile.dart';
+
 import '../state/agent_state.dart';
 import '../state/asset_state.dart';
 import '../utils/home_transfer_pdf.dart';

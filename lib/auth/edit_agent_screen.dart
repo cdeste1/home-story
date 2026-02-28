@@ -117,11 +117,11 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                   Colors.black,
                 ].map((color) {
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedAccentColor = color.value),
+                    onTap: () => setState(() => _selectedAccentColor = color.toARGB32()),
                     child: CircleAvatar(
                       backgroundColor: color,
                       radius: 20,
-                      child: _selectedAccentColor == color.value
+                      child: _selectedAccentColor == color.toARGB32()
                           ? const Icon(Icons.check, color: Colors.white)
                           : null,
                     ),
@@ -143,7 +143,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                   decoration: BoxDecoration(
                     border: Border.all(color: accent, width: 1.5),
                     borderRadius: BorderRadius.circular(12),
-                    color: accent.withOpacity(0.05),
+                    color: accent.withValues(alpha: .05),
                   ),
                   child: _selectedLogoPath != null
                       ? ClipRRect(
