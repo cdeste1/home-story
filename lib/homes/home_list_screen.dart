@@ -69,15 +69,7 @@ class _HomeListScreenState extends State<HomeListScreen> {
                 );
               },
             ),
-            //TEMP RESET AGENT
-            IconButton(
-  icon: const Icon(Icons.restart_alt),
-  tooltip: 'Reset Agent (Dev)',
-  onPressed: () {
-    context.read<AgentState>().clear();
-  },
-)
-      
+            
           ],
       ),
  body: homes.isEmpty

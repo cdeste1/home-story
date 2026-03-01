@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../state/export_access_state.dart';
 import '../state/home_state.dart';
 
-
 enum PurchaseFlowStatus { idle, pending, success, error }
 
 class PurchaseManager extends ChangeNotifier {
@@ -23,6 +22,8 @@ class PurchaseManager extends ChangeNotifier {
   bool _isUserInitiatedPurchase = false;
   bool _isRestoreInProgress = false;
 
+  Timer? _pendingTimer; // tracks the timeout so we can cancel it on success
+
   PurchaseFlowStatus _status = PurchaseFlowStatus.idle;
   PurchaseFlowStatus get status => _status;
 
@@ -36,11 +37,24 @@ class PurchaseManager extends ChangeNotifier {
   }
 
   void resetToIdle() {
+    _pendingTimer?.cancel();
+    _pendingTimer = null;
     _isUserInitiatedPurchase = false;
     _status = PurchaseFlowStatus.idle;
     pendingHomeIds.clear();
     onUnlockListener = null;
     notifyListeners();
+  }
+
+  void _startPendingTimer() {
+    _pendingTimer?.cancel();
+    // If Apple hasn't responded in 30 seconds, assume canceled/dismissed
+    _pendingTimer = Timer(const Duration(seconds: 30), () {
+      if (_status == PurchaseFlowStatus.pending) {
+        debugPrint('PurchaseManager: timeout — resetting to idle');
+        resetToIdle();
+      }
+    });
   }
 
   Future<void> initialize(BuildContext context) async {
@@ -74,10 +88,7 @@ class PurchaseManager extends ChangeNotifier {
       await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: product),
       );
-      // Timeout fallback in case Apple never fires canceled
-      Future.delayed(const Duration(seconds: 60), () {
-        if (_status == PurchaseFlowStatus.pending) resetToIdle();
-      });
+      _startPendingTimer(); // start timeout after sheet is launched
     } catch (e) {
       _isUserInitiatedPurchase = false;
       _status = PurchaseFlowStatus.error;
@@ -98,15 +109,10 @@ class PurchaseManager extends ChangeNotifier {
         (p) => p.id == unlimitedYearlyId,
         orElse: () => throw Exception('Product $unlimitedYearlyId not found.'),
       );
-      // Use buyNonConsumable — the in_app_purchase plugin uses the same call
-      // for auto-renewable subscriptions. Apple handles renewal automatically.
       await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: product),
       );
-      // Timeout fallback in case Apple never fires canceled
-      Future.delayed(const Duration(seconds: 60), () {
-        if (_status == PurchaseFlowStatus.pending) resetToIdle();
-      });
+      _startPendingTimer(); // start timeout after sheet is launched
     } catch (e) {
       _isUserInitiatedPurchase = false;
       _status = PurchaseFlowStatus.error;
@@ -119,7 +125,6 @@ class PurchaseManager extends ChangeNotifier {
   Future<void> restorePurchases() async {
     _isRestoreInProgress = true;
     await _iap.restorePurchases();
-    // Reset flag after stream has time to deliver restored transactions
     await Future.delayed(const Duration(seconds: 3));
     _isRestoreInProgress = false;
   }
@@ -138,8 +143,8 @@ class PurchaseManager extends ChangeNotifier {
           break;
 
         case PurchaseStatus.purchased:
-          // Only handle if the user actually tapped a buy button
           if (_isUserInitiatedPurchase) {
+            _pendingTimer?.cancel(); // real purchase came in — cancel the timeout
             await _handleSuccessfulPurchase(purchase, context);
           } else {
             if (purchase.pendingCompletePurchase) {
@@ -149,11 +154,9 @@ class PurchaseManager extends ChangeNotifier {
           break;
 
         case PurchaseStatus.restored:
-          // Only handle restores when user explicitly tapped Restore Purchases
           if (_isRestoreInProgress) {
             await _handleRestoredPurchase(purchase, context);
           } else {
-            // Automatic startup replay — just complete it, don't unlock anything
             debugPrint('PurchaseManager: ignoring startup restore of ${purchase.productID}');
             if (purchase.pendingCompletePurchase) {
               await _iap.completePurchase(purchase);
@@ -162,6 +165,7 @@ class PurchaseManager extends ChangeNotifier {
           break;
 
         case PurchaseStatus.error:
+          _pendingTimer?.cancel();
           _isUserInitiatedPurchase = false;
           _status = PurchaseFlowStatus.error;
           _errorMessage = purchase.error?.message ?? 'Purchase failed';
@@ -174,6 +178,8 @@ class PurchaseManager extends ChangeNotifier {
           break;
 
         case PurchaseStatus.canceled:
+          // Apple fired canceled cleanly — reset immediately
+          _pendingTimer?.cancel();
           _isUserInitiatedPurchase = false;
           _status = PurchaseFlowStatus.idle;
           pendingHomeIds.clear();
@@ -184,7 +190,6 @@ class PurchaseManager extends ChangeNotifier {
     }
   }
 
-  /// Handles a brand new purchase the user just completed.
   Future<void> _handleSuccessfulPurchase(
     PurchaseDetails purchase,
     BuildContext context,
@@ -194,10 +199,8 @@ class PurchaseManager extends ChangeNotifier {
     final exportAccess = context.read<ExportAccessState>();
 
     if (purchase.productID == unlimitedYearlyId) {
-      // Activate subscription with 1 year expiry from now
       final expiry = DateTime.now().add(const Duration(days: 365));
       await exportAccess.activateSubscription(expiry);
-      // For a subscription, unlock all homes
       for (final id in pendingHomeIds) {
         await exportAccess.unlockHome(id);
       }
@@ -213,7 +216,6 @@ class PurchaseManager extends ChangeNotifier {
     pendingHomeIds.clear();
     notifyListeners();
 
-    // Fire callback — dismisses dialog and navigates to PDF
     final listener = onUnlockListener;
     onUnlockListener = null;
     if (listener != null) {
@@ -229,7 +231,6 @@ class PurchaseManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Handles a purchase restored via the Restore Purchases button.
   Future<void> _handleRestoredPurchase(
     PurchaseDetails purchase,
     BuildContext context,
@@ -239,20 +240,13 @@ class PurchaseManager extends ChangeNotifier {
     final exportAccess = context.read<ExportAccessState>();
 
     if (purchase.productID == unlimitedYearlyId) {
-      // For a restored subscription we don't know the exact expiry from
-      // the plugin — set 1 year from now as a best estimate.
-      // For production, use receipt validation to get the real expiry.
       final expiry = DateTime.now().add(const Duration(days: 365));
       await exportAccess.activateSubscription(expiry);
     } else if (purchase.productID == homeUnlockId) {
-      // For a restored home unlock, we don't know which home it was for
-      // (the purchase doesn't carry that info). We can't know which specific home was originally unlocked,
-      // so unlock all current homes as a fair restoration.
-        final homeState = context.read<HomeState>();
-        for (final id in homeState.allHomeIds()) {
-          await exportAccess.unlockHome(id);
-        }
-      //debugPrint('PurchaseManager: restored home unlock — cannot determine home ID');
+      final homeState = context.read<HomeState>();
+      for (final id in homeState.allHomeIds()) {
+        await exportAccess.unlockHome(id);
+      }
     }
 
     if (purchase.pendingCompletePurchase) {
@@ -262,6 +256,7 @@ class PurchaseManager extends ChangeNotifier {
 
   @override
   void dispose() {
+    _pendingTimer?.cancel();
     _subscription?.cancel();
     super.dispose();
   }
