@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/purchase_manager.dart';
 import '../models/home.dart';
 import '../models/agent_profile.dart';
@@ -322,10 +323,56 @@ class _UnlockDialog extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 18),
+                TextButton(
+                        onPressed: pm.isLoading
+                            ? null
+                            : () async {
+                                await pm.restorePurchases();
+                              },
+                        child: const Text(
+                          'Restore Purchases',
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      ),
+
 
                 TextButton(
                   onPressed: pm.isLoading ? null : onCancel,
                   child: const Text('Cancel'),
+                ),
+                const SizedBox(height: 8),
+
+                // Required by App Store Guideline 3.1.2(c)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://cdeste1.github.io/home-story/legal/privacy.html')),
+                      child: const Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    const Text('  ·  ',
+                        style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    GestureDetector(
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://cdeste1.github.io/home-story/legal/Terms.html')),
+                      child: const Text(
+                        'Terms of Use',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

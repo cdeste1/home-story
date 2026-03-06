@@ -49,7 +49,7 @@ class PurchaseManager extends ChangeNotifier {
   void _startPendingTimer() {
     _pendingTimer?.cancel();
     // If Apple hasn't responded in 30 seconds, assume canceled/dismissed
-    _pendingTimer = Timer(const Duration(seconds: 30), () {
+    _pendingTimer = Timer(const Duration(seconds: 15), () {
       if (_status == PurchaseFlowStatus.pending) {
         debugPrint('PurchaseManager: timeout — resetting to idle');
         resetToIdle();
