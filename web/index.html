@@ -1,111 +1,921 @@
-<!DOCTYPE html><html><head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Story — The Ultimate Digital Home App for Realtors</title>
+  <meta name="description" content="Home Story transforms the chaos of closings into a polished digital experience. Give every buyer a beautifully organized home folder, and every agent a reputation worth remembering." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="home_story">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png">
-
-  <title>home_story</title>
-  <link rel="manifest" href="manifest.json">
-  
-  
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <style id="splash-screen-style">
-    html {
-      height: 100%
+    :root {
+      --gold: #c8a96e;
+      --gold-light: #d9be8a;
+      --dark: #0d1117;
+      --dark-surface: #1a1f2e;
+      --cream: #f0ece4;
+      --cream-muted: rgba(240,236,228,0.65);
+      --cream-faint: rgba(240,236,228,0.1);
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      min-height: 100%;
-      background-color: #F6F7F9;
-          background-size: 100% 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--cream);
+      overflow-x: hidden;
     }
 
-    .center {
-      margin: 0;
+    /* NAV */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2.5rem;
+      border-bottom: 0.5px solid var(--cream-faint);
+      position: sticky;
+      top: 0;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem; /* space between icon + text */
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      height: 28px; /* adjust to taste */
+      width: auto;
+      display: block;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.875rem;
+      color: var(--cream-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--cream); }
+
+    .nav-cta {
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      padding: 0.55rem 1.25rem;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+
+    .nav-cta:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 90vh;
+      align-items: center;
+      padding: 5rem 2.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-text { padding-right: 4rem; }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 4vw, 3.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      color: var(--cream);
+    }
+
+    .hero-headline em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-body {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--cream-muted);
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+      max-width: 440px;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cta-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      padding: 0.85rem 1.75rem;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .cta-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+    .cta-note {
+      font-size: 0.875rem;
+      color: rgba(240,236,228,0.4);
+    }
+
+    /* PHONE MOCKUP */
+    .hero-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .phone-wrap {
+      position: relative;
+    }
+
+    .phone-glow {
       position: absolute;
-      top: 50%;
+      inset: -40px;
+      background: radial-gradient(ellipse at center, rgba(200,169,110,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .phone-frame {
+      width: 270px;
+      height: 600px;
+      background: var(--dark-surface);
+      border-radius: 40px;
+      border: 1px solid rgba(200,169,110,0.2);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 50px 100px rgba(0,0,0,0.6), inset 0 0 0 0.5px rgba(255,255,255,0.05);
+    }
+
+    .phone-img {
+        width: 100%;
+        height: 100%;
+        object-fit:cover;   /* fills container, crops excess */
+        display: block;
+    }
+
+    .notch {
+      position: absolute;
+      top: 12px;
       left: 50%;
-      -ms-transform: translate(-50%, -50%);
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
+      width: 80px;
+      height: 15px;
+      background: var(--dark);
+      border-radius: 14px 14px 14px 14px;
+      z-index: 10;
     }
 
-    .contain {
-      display:block;
-      width:100%; height:100%;
-      object-fit: contain;
-    }
-
-    .stretch {
-      display:block;
-      width:100%; height:100%;
-    }
-
-    .cover {
-      display:block;
-      width:100%; height:100%;
-      object-fit: cover;
-    }
-
-    .bottom {
+    .phone-screen {
       position: absolute;
-      bottom: 0;
+      inset: 0;
+      padding: 3rem 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .phone-header-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      margin-bottom: 2px;
+    }
+
+    .phone-subhead {
+      font-size: 0.6rem;
+      color: rgba(240,236,228,0.35);
+      margin-bottom: 6px;
+    }
+
+    .phone-card {
+      background: rgba(200,169,110,0.07);
+      border: 0.5px solid rgba(200,169,110,0.18);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .phone-card-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: rgba(200,169,110,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .phone-card-label {
+      font-size: 0.7rem;
+      color: rgba(240,236,228,0.85);
+      font-weight: 500;
+    }
+
+    .phone-card-sub {
+      font-size: 0.58rem;
+      color: rgba(240,236,228,0.35);
+      margin-top: 1px;
+    }
+
+    .phone-export-btn {
+      margin-top: auto;
+      text-align: center;
+      background: var(--gold);
+      color: var(--dark);
+      border-radius: 100px;
+      padding: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    /* SOCIAL PROOF STRIP */
+    .proof-strip {
+      border-top: 0.5px solid var(--cream-faint);
+      border-bottom: 0.5px solid var(--cream-faint);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      flex-wrap: wrap;
+    }
+
+    .proof-item {
+      text-align: center;
+    }
+
+    .proof-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      color: var(--gold);
+    }
+
+    .proof-label {
+      font-size: 0.75rem;
+      color: rgba(240,236,228,0.4);
+      margin-top: 2px;
+      letter-spacing: 0.05em;
+    }
+
+    /* FEATURES */
+    .features {
+      background: var(--cream);
+      color: var(--dark);
+      padding: 6rem 2.5rem;
+    }
+
+    .features-inner { max-width: 1200px; margin: 0 auto; }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .section-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3vw, 2.75rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 3.5rem;
+      max-width: 600px;
+      color: var(--dark);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.07);
+      border-radius: 18px;
+      padding: 1.75rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 1.1rem;
+    }
+
+    .feature-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+
+    .feature-desc {
+      font-size: 0.875rem;
+      line-height: 1.65;
+      color: rgba(13,17,23,0.55);
+      font-weight: 300;
+    }
+
+    /* HOW IT WORKS */
+    .how {
+      background: var(--dark);
+      padding: 6rem 2.5rem;
+    }
+
+    .how-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;  
+      margin-top: 3.5rem;
+      position: relative;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: calc(16.66% + 12px);
+      right: calc(16.66% + 12px);
+      height: 0.5px;
+      background: rgba(200,169,110,0.25);
+    }
+
+    .step { text-align: center; }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid rgba(200,169,110,0.35);
+      background: rgba(200,169,110,0.08);
+      color: var(--gold);
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+    }
+
+    .step-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--cream);
+    }
+
+    .step-desc {
+      font-size: 0.875rem;
+      color: var(--cream-muted);
+      line-height: 1.65;
+      font-weight: 300;
+    }
+
+    /* TESTIMONIAL */
+    .testimonial {
+      background: #0a0e14;
+      padding: 6rem 2.5rem;
+      border-top: 0.5px solid var(--cream-faint);
+      border-bottom: 0.5px solid var(--cream-faint);
+    }
+
+    .testimonial-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .quote-mark {
+      font-family: 'Playfair Display', serif;
+      font-size: 6rem;
+      color: var(--gold);
+      line-height: 0.4;
+      display: block;
+      margin-bottom: 2rem;
+      opacity: 0.4;
+    }
+
+    .quote-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+      line-height: 1.5;
+      font-style: italic;
+      color: var(--cream);
+      margin-bottom: 2rem;
+    }
+
+    .quote-author {
+      font-size: 0.75rem;
+      color: rgba(240,236,228,0.35);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* PRICING */
+    .pricing {
+      background: var(--cream);
+      padding: 6rem 2.5rem;
+    }
+
+    .pricing-inner { max-width: 820px; margin: 0 auto; }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 3.5rem;
+    }
+
+    .price-card {
+      border-radius: 20px;
+      padding: 2.25rem;
+      border: 0.5px solid rgba(0,0,0,0.1);
+      background: #fff;
+      position: relative;
+    }
+
+    .price-card.featured {
+      background: var(--dark);
+      border-color: var(--gold);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: -13px;
       left: 50%;
-      -ms-transform: translate(-50%, 0);
-      transform: translate(-50%, 0);
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 100px;
+      font-weight: 500;
+      white-space: nowrap;
     }
 
-    .bottomLeft {
-      position: absolute;
-      bottom: 0;
-      left: 0;
+    .price-tier {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(13,17,23,0.4);
+      margin-bottom: 0.75rem;
     }
 
-    .bottomRight {
-      position: absolute;
-      bottom: 0;
-      right: 0;
+    .price-card.featured .price-tier { color: rgba(240,236,228,0.4); }
+
+    .price-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--dark);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .price-card.featured .price-amount { color: var(--gold); }
+
+    .price-period {
+      font-size: 0.8rem;
+      color: rgba(13,17,23,0.4);
+      margin-bottom: 1.75rem;
+    }
+
+    .price-card.featured .price-period { color: rgba(240,236,228,0.4); }
+
+    .price-divider {
+      height: 0.5px;
+      background: rgba(0,0,0,0.07);
+      margin-bottom: 1.5rem;
+    }
+
+    .price-card.featured .price-divider { background: rgba(240,236,228,0.1); }
+
+    .price-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .price-features li {
+      font-size: 0.875rem;
+      color: rgba(13,17,23,0.65);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-weight: 300;
+      line-height: 1.4;
+    }
+
+    .price-card.featured .price-features li { color: rgba(240,236,228,0.65); }
+
+    .check { color: var(--gold); font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+
+    .price-btn {
+      width: 100%;
+      padding: 0.875rem;
+      border-radius: 100px;
+      border: 1px solid var(--dark);
+      background: transparent;
+      color: var(--dark);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .price-btn:hover { background: var(--dark); color: var(--cream); }
+
+    .price-card.featured .price-btn {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--dark);
+    }
+
+    .price-card.featured .price-btn:hover { background: var(--gold-light); }
+
+    /* FINAL CTA */
+    .final-cta {
+      background: var(--gold);
+      padding: 6rem 2.5rem;
+      text-align: center;
+    }
+
+    .final-cta h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      color: var(--dark);
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .final-cta p {
+      color: rgba(13,17,23,0.6);
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+      font-size: 1.05rem;
+      max-width: 460px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .appstore-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--dark);
+      color: var(--cream);
+      border-radius: 14px;
+      padding: 0.85rem 1.75rem;
+      text-decoration: none;
+      font-family: 'DM Sans', sans-serif;
+      transition: transform 0.15s, background 0.2s;
+    }
+
+    .appstore-btn:hover { transform: translateY(-2px); background: #1a1f2e; }
+
+    .appstore-btn-text-top { font-size: 0.6rem; opacity: 0.55; display: block; }
+    .appstore-btn-text-main { font-size: 1.05rem; font-weight: 500; display: block; }
+
+    /* FOOTER */
+    footer {
+      background: var(--dark);
+      padding: 2rem 2.5rem;
+      border-top: 0.5px solid var(--cream-faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--cream);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 0.8rem;
+      color: rgba(240,236,228,0.35);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--cream-muted); }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .nav { padding: 1rem 1.25rem; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 3rem 1.25rem; min-height: auto; }
+      .hero-text { padding-right: 0; margin-bottom: 3rem; order: 1; }
+      .hero-visual { order: 2; }
+      .proof-strip { gap: 2rem; padding: 1.5rem; }
+      .features, .how, .testimonial, .pricing, .final-cta { padding: 4rem 1.25rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; text-align: center; }
     }
   </style>
-  <script id="splash-screen-script">
-    function removeSplashFromWeb() {
-      document.getElementById("splash")?.remove();
-      document.getElementById("splash-branding")?.remove();
-      document.body.style.background = "transparent";
-    }
-  </script>
 </head>
 <body>
-  <picture id="splash">
-      <source srcset="splash/img/light-1x.png 1x, splash/img/light-2x.png 2x, splash/img/light-3x.png 3x, splash/img/light-4x.png 4x" media="(prefers-color-scheme: light)">
-      <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
-      <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
-  </picture>
-  
-  <script src="flutter_bootstrap.js" async=""></script>
 
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <a href="/" class="nav-logo" aria-label="Home Story home">
+        <img src="app_icon.png" alt="Home Story logo">
+        <span>Home Story</span>
+      </a>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" class="nav-cta" target="_blank" rel="noopener">Download Free</a>
+  </nav>
 
-</body></html>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">For Real Estate Professionals</p>
+      <h1 class="hero-headline">Close with <em>confidence.</em><br>Leave a lasting impression.</h1>
+      <p class="hero-body">Home Story transforms the chaos of closings into a polished digital experience — giving every buyer a beautifully organized home folder, and every agent a reputation worth remembering.</p>
+      <div class="cta-group">
+        <a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" class="cta-primary" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Download for iPhone
+        </a>
+        <span class="cta-note">Free to start · No credit card</span>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="phone-wrap">
+        <div class="phone-glow"></div>
+        <div class="phone-frame">
+          <div class="notch"></div>
+        <img src="HomeStory_Report.png" alt="App screenshot" class="phone-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF STRIP -->
+  <div class="proof-strip">
+    <div class="proof-item">
+      <p class="proof-num">5 min</p>
+      <p class="proof-label">Average setup per home</p>
+    </div>
+    <div class="proof-item">
+      <p class="proof-num">iOS 13+</p>
+      <p class="proof-label">iPhone &amp; iPad native</p>
+    </div>
+    <div class="proof-item">
+      <p class="proof-num">100%</p>
+      <p class="proof-label">Branded to you</p>
+    </div>
+    <div class="proof-item">
+      <p class="proof-num">Free</p>
+      <p class="proof-label">To download &amp; create homes</p>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <p class="section-label">What Home Story does</p>
+      <h2 class="section-headline">Everything a buyer needs, organized and branded for you.</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📁</div>
+          <h3 class="feature-title">One clean digital folder</h3>
+          <p class="feature-desc">Documents, warranties, receipts, appliance info, and paint colors — all organized in one place, transferred at closing.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏷️</div>
+          <h3 class="feature-title">Your brand, front and center</h3>
+          <p class="feature-desc">Your name, brokerage, firm colors,and logo are automatically included in every PDF — making every closing a branding moment.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Professional PDF in minutes</h3>
+          <p class="feature-desc">No more hunting through emails or filing cabinets. Generate a polished handoff document faster than you can brew a coffee.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">Secure per-home access</h3>
+          <p class="feature-desc">Unlock individual homes or go unlimited with a subscription. Your data stays organized, private, and always accessible.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎁</div>
+          <h3 class="feature-title">A closing gift that actually matters</h3>
+          <p class="feature-desc">Give buyers something they'll use for years — not a gift card they forget. Organized, actionable home info at their fingertips.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3 class="feature-title">iPhone &amp; iPad native</h3>
+          <p class="feature-desc">Designed specifically for iOS. Clean, fast, and works exactly how you'd expect — because your time matters more than learning new software.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how-it-works">
+    <div class="how-inner">
+      <p class="section-label" style="text-align:center;">How it works</p>
+      <h2 class="section-headline" style="text-align:center; margin:0 auto; max-width:100%; color: var(--gold);">
+        Four steps to a flawless closing
+      </h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3 class="step-title">Create <em>Your</em> brokerage</h3>
+          <p class="step-desc">Add your details and upload your branding once. Home Story remembers your details for every listing.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3 class="step-title">Create a home</h3>
+          <p class="step-desc">Add the property address and snap a picture of your client's home.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3 class="step-title">Add the details</h3>
+          <p class="step-desc">Walk through and snap pics of appliances, paint colors, receipts, warranties, and closing docs. Takes minutes per home.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3 class="step-title">Export &amp; hand off</h3>
+          <p class="step-desc">Generate a branded professional PDF and hand it to your buyer at closing. They'll remember you forever.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL  TO BE ADDED
+  <section class="testimonial">
+    <div class="testimonial-inner">
+      <span class="quote-mark">"</span>
+      <p class="quote-text">My clients always ask what that closing folder is. Now I hand them Home Story and they're blown away. It's become my #1 differentiator.</p>
+      <p class="quote-author">— Real Estate Agent, Connecticut</p>
+    </div>
+  </section> -->
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="pricing-inner">
+      <p class="section-label">Simple pricing</p>
+      <h2 class="section-headline">Start free. Scale as you close.</h2>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <p class="price-tier">Per home</p>
+          <p class="price-amount">$59.99</p>
+          <p class="price-period">one-time, per listing</p>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> Branded PDF export</li>
+            <li><span class="check">✓</span> Permanent unlock</li>
+            <li><span class="check">✓</span> Great for occasional closings</li>
+          </ul>
+          <a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" class="price-btn" target="_blank" rel="noopener">Get started free</a>
+        </div>
+        <div class="price-card featured">
+          <span class="featured-badge">Best for active agents</span>
+          <p class="price-tier">Unlimited</p>
+          <p class="price-amount">$399</p>
+          <p class="price-period">per year · unlimited homes</p>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> Unlimited listings</li>
+            <li><span class="check">✓</span> Full branded PDF exports</li>
+            <li><span class="check">✓</span> All future features included</li>
+            <li><span class="check">✓</span> Auto-renews annually</li>
+          </ul>
+          <a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" class="price-btn" target="_blank" rel="noopener">Download &amp; subscribe</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2>Ready to impress your next buyer?</h2>
+    <p>Download Home Story free and close with confidence from day one.</p>
+    <a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" class="appstore-btn" target="_blank" rel="noopener">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      <div>
+        <span class="appstore-btn-text-top">Download on the</span>
+        <span class="appstore-btn-text-main">App Store</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-logo">Home Story</span>
+    <ul class="footer-links">
+      <li><a href="https://cdeste1.github.io/home-story/legal/Terms.html" target="_blank" rel="noopener">Terms of Use</a></li>
+      <li><a href="https://cdeste1.github.io/home-story/legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></li>
+      <li><a href="https://apps.apple.com/us/app/home-story-by-chris/id6759354876" target="_blank" rel="noopener">App Store</a></li>
+    </ul>
+    <span style="font-size: 0.75rem; color: rgba(240,236,228,0.25);">© 2026 CDProjects</span>
+  </footer>
+
+</body>
+</html>
